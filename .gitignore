@@ -6,5 +6,9 @@ server/downloads/
 server/testdb/
 web/dist/
 .opencode/
+.env
+.env.local
+.env.*.local
+!.env.example
 *.log
 .DS_Store
