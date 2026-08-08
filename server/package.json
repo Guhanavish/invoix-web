@@ -1,0 +1,15 @@
+{
+  "name": "invoix-server",
+  "version": "1.0.0",
+  "description": "Backend for Invoix web portal - auth, sync and read-only data API",
+  "private": true,
+  "main": "index.js",
+  "scripts": {
+    "start": "node index.js"
+  },
+  "dependencies": {
+    "express": "^4.19.2",
+    "multer": "^2.2.0",
+    "sql.js": "^1.11.0"
+  }
+}
