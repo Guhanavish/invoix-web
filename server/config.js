@@ -7,7 +7,7 @@ const IS_VERCEL = !!process.env.VERCEL;
 const DATA_DIR = IS_VERCEL ? path.join('/tmp', 'invoix-data') : path.join(__dirname, 'data');
 const USERS_DIR = path.join(DATA_DIR, 'users');
 const DOWNLOADS_DIR = process.env.DOWNLOADS_DIR || (IS_VERCEL ? path.join('/tmp', 'invoix-downloads') : path.join(__dirname, 'downloads'));
-const WEB_DIR = process.env.WEB_DIR || path.join(__dirname, '..', 'web', 'dist');
+const WEB_DIR = process.env.WEB_DIR || path.join(__dirname, '..', 'dist');
 const PORT = process.env.PORT || 3000;
 
 const TOKEN_SECRET = process.env.TOKEN_SECRET || 'invoix-web-secret-change-me';
