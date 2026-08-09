@@ -9,11 +9,16 @@
     "preview": "vite preview"
   },
   "dependencies": {
+    "@vercel/blob": "^1.0.0",
+    "dotenv": "^17.4.2",
+    "express": "^4.19.2",
     "lucide-react": "^0.469.0",
+    "multer": "^2.2.0",
     "react": "^19.0.0",
     "react-dom": "^19.0.0",
     "react-router-dom": "^7.1.0",
-    "recharts": "^2.15.0"
+    "recharts": "^2.15.0",
+    "sql.js": "^1.11.0"
   },
   "devDependencies": {
     "@vitejs/plugin-react": "^4.3.4",
