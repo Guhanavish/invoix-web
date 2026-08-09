@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { Link, useNavigate, useLocation } from 'react-router-dom';
 import { Receipt, LogIn, ShieldCheck } from 'lucide-react';
 import { api } from '../api';
+import GoogleButton from '../components/GoogleButton';
 
 export default function Login() {
   const navigate = useNavigate();
@@ -10,6 +11,16 @@ export default function Login() {
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
   const [busy, setBusy] = useState(false);
+  const [googleBusy, setGoogleBusy] = useState(false);
+
+  const onGoogleSuccess = (res) => {
+    const from = location.state?.from?.pathname?.startsWith('/app') ? location.state.from.pathname : '/app';
+    navigate(from, { replace: true });
+  };
+  const onGoogleError = (err) => {
+    setGoogleBusy(false);
+    setError(err.message || 'Google sign-in failed');
+  };
 
   const submit = async (e) => {
     e.preventDefault();
@@ -65,6 +76,12 @@ export default function Login() {
           {error && <div className="err-box">{error}</div>}
 
           <form onSubmit={submit}>
+            <GoogleButton
+              onSuccess={onGoogleSuccess}
+              onError={onGoogleError}
+              label="Sign in with the same Google account you use in the Invoix desktop app"
+            />
+            <div className="divider"><span>or use your user id</span></div>
             <div className="field">
               <label htmlFor="userId">User ID</label>
               <input

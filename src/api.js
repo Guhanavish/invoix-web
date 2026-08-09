@@ -52,7 +52,23 @@ export const api = {
     fd.append(field, file);
     return this.request(path, { method: 'POST', body: fd });
   },
+  async googleLogin(idToken) {
+    const res = await this.post('/auth/google', { id_token: idToken });
+    if (res && res.token) this.setSession(res.token, res.user);
+    return res;
+  },
 };
+
+let _configCache = null;
+export async function getConfig() {
+  if (_configCache) return _configCache;
+  try {
+    _configCache = await fetch('/api/config').then((r) => r.json());
+  } catch {
+    _configCache = { appName: 'Invoix', googleClientId: null };
+  }
+  return _configCache;
+}
 
 export const fmtMoney = (n) =>
   new Intl.NumberFormat('en-IN', { style: 'currency', currency: 'INR', maximumFractionDigits: 0 }).format(Number(n) || 0);

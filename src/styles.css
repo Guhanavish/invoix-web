@@ -513,6 +513,9 @@ table.tbl tbody tr:last-child td { border-bottom: none; }
 .auth-box > p { color: var(--muted); margin-bottom: 28px; }
 .auth-foot { margin-top: 22px; text-align: center; color: var(--muted); font-size: 14px; }
 .auth-foot a { color: var(--primary); font-weight: 600; }
+.divider { display: flex; align-items: center; text-align: center; margin: 18px 0; color: var(--muted); font-size: 12.5px; }
+.divider::before, .divider::after { content: ''; flex: 1; border-bottom: 1px solid var(--line); }
+.divider span { padding: 0 12px; }
 .err-box { background: var(--danger-soft); color: var(--danger); border: 1px solid #f5c2c3; border-radius: var(--radius-sm); padding: 11px 14px; font-size: 13.5px; margin-bottom: 16px; }
 .ok-box { background: var(--success-soft); color: var(--success); border: 1px solid #bfe6d4; border-radius: var(--radius-sm); padding: 11px 14px; font-size: 13.5px; margin-bottom: 16px; }
 
