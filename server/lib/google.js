@@ -68,7 +68,8 @@ function rsaPublicKeyFromJWK(jwk) {
 
 // Verifies a Google ID token. Returns { sub, email, name, picture } or throws.
 async function verifyGoogleIdToken(idToken) {
-  const clientId = process.env.GOOGLE_CLIENT_ID;
+  const { GOOGLE_CLIENT_ID } = require('../config');
+  const clientId = GOOGLE_CLIENT_ID;
   if (!clientId) throw new Error('GOOGLE_CLIENT_ID is not configured');
 
   const parts = String(idToken).split('.');
