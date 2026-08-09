@@ -23,6 +23,7 @@ function createApp() {
   app.use('/api/sync', require('./routes/sync'));
   app.use('/api/data', require('./routes/data'));
   app.use('/api/download', require('./routes/download'));
+  app.use('/api/config', require('./routes/config'));
 
   if (fs.existsSync(WEB_DIR)) {
     app.use(express.static(WEB_DIR));
@@ -34,6 +35,14 @@ function createApp() {
   }
 
   app.use('/api', (req, res) => res.status(404).json({ success: false, error: 'Not found' }));
+
+  // Final error handler: return JSON instead of crashing the function
+  // eslint-disable-next-line no-unused-vars
+  app.use((err, req, res, next) => {
+    console.error('[api error]', err);
+    if (res.headersSent) return next(err);
+    res.status(500).json({ success: false, error: 'Internal server error' });
+  });
 
   return app;
 }

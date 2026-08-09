@@ -1,31 +1,37 @@
 'use strict';
 
 const initSqlJs = require('sql.js');
-const fs = require('fs');
 const path = require('path');
-const { USERS_DIR } = require('../config');
+const storage = require('./storage');
 
 let SQLPromise = null;
-
 function sql() {
   if (!SQLPromise) SQLPromise = initSqlJs();
   return SQLPromise;
 }
 
-function userDbPath(userId) {
-  return path.join(USERS_DIR, userId, 'einvoice.db');
+function userDbKey(userId) {
+  return `${userId}/einvoice.db`;
+}
+
+function userMetaKey(userId) {
+  return `${userId}/sync-meta.json`;
+}
+
+async function getUserDbBuffer(userId) {
+  return storage.readRaw(userDbKey(userId));
 }
 
 function hasUserDb(userId) {
-  return fs.existsSync(userDbPath(userId));
+  return storage.exists(userDbKey(userId));
 }
 
 async function openUserDb(userId) {
-  const dbPath = userDbPath(userId);
-  if (!fs.existsSync(dbPath)) return null;
+  const buffer = await getUserDbBuffer(userId);
+  if (!buffer) return null;
   const SQL = await sql();
   try {
-    const db = new SQL.Database(fs.readFileSync(dbPath));
+    const db = new SQL.Database(buffer);
     db.run('PRAGMA foreign_keys = ON');
     return db;
   } catch (e) {
@@ -88,4 +94,7 @@ async function withUserDb(userId, fn) {
   }
 }
 
-module.exports = { openUserDb, withUserDb, queryAll, queryGet, queryValue, countTables, hasUserDb, userDbPath };
+module.exports = {
+  openUserDb, withUserDb, queryAll, queryGet, queryValue, countTables,
+  hasUserDb, getUserDbBuffer, userDbKey, userMetaKey,
+};

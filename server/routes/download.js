@@ -7,7 +7,11 @@ const { DOWNLOADS_DIR } = require('../config');
 
 const router = express.Router();
 
-function listInstallers() {
+function asyncHandler(fn) {
+  return (req, res, next) => Promise.resolve(fn(req, res, next)).catch(next);
+}
+
+function listLocalInstallers() {
   try {
     return fs.readdirSync(DOWNLOADS_DIR).filter((f) => /\.(zip|exe)$/i.test(f));
   } catch (e) {
@@ -15,10 +19,12 @@ function listInstallers() {
   }
 }
 
-router.get('/installer/info', (req, res) => {
-  const files = listInstallers().map((name) => {
+router.get('/installer/info', asyncHandler(async (req, res) => {
+  const names = listLocalInstallers();
+  const files = names.map((name) => {
     const full = path.join(DOWNLOADS_DIR, name);
-    const stat = fs.statSync(full);
+    let stat = { size: 0, mtime: new Date(0) };
+    try { stat = fs.statSync(full); } catch (e) {}
     return {
       name,
       size: stat.size,
@@ -27,7 +33,7 @@ router.get('/installer/info', (req, res) => {
     };
   });
   res.json({ success: true, files });
-});
+}));
 
 router.get('/installer/:name', (req, res) => {
   const name = path.basename(req.params.name);

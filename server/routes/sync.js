@@ -2,51 +2,49 @@
 
 const express = require('express');
 const multer = require('multer');
-const fs = require('fs');
-const path = require('path');
-const { USERS_DIR } = require('../config');
 const { requireAuth } = require('../middleware/auth');
-const { hasUserDb, openUserDb, countTables, queryGet } = require('../lib/db');
+const { hasUserDb, openUserDb, countTables, queryGet, userDbKey, userMetaKey } = require('../lib/db');
+const storage = require('../lib/storage');
 
 const router = express.Router();
+
+function asyncHandler(fn) {
+  return (req, res, next) => Promise.resolve(fn(req, res, next)).catch(next);
+}
 
 const upload = multer({
   storage: multer.memoryStorage(),
   limits: { fileSize: 200 * 1024 * 1024 },
 });
 
-router.post('/upload', requireAuth, upload.single('db'), async (req, res) => {
+router.post('/upload', requireAuth, upload.single('db'), asyncHandler(async (req, res) => {
   if (!req.file) {
     return res.status(400).json({ success: false, error: 'No database file received' });
   }
   const userId = req.userId;
-  const userDir = path.join(USERS_DIR, userId);
-  fs.mkdirSync(userDir, { recursive: true });
-  const dbPath = path.join(userDir, 'einvoice.db');
 
-  try {
-    const SQL = await (require('sql.js'))();
-    const sqlDb = new SQL.Database(req.file.buffer);
-    const tables = countTables(sqlDb);
-    sqlDb.close();
+  const SQL = await (require('sql.js'))();
+  const sqlDb = new SQL.Database(req.file.buffer);
+  const tables = countTables(sqlDb);
+  sqlDb.close();
 
-    fs.writeFileSync(dbPath, req.file.buffer);
-    const meta = {
-      lastSync: new Date().toISOString(),
-      size: req.file.size,
-      tables: tables.tables,
-      counts: tables.counts,
-    };
-    fs.writeFileSync(path.join(userDir, 'sync-meta.json'), JSON.stringify(meta, null, 2));
-    res.json({ success: true, syncedAt: meta.lastSync, counts: tables.counts });
-  } catch (e) {
-    res.status(400).json({ success: false, error: 'Invalid database file: ' + e.message });
-  }
-});
+  const meta = {
+    lastSync: new Date().toISOString(),
+    size: req.file.size,
+    tables: tables.tables,
+    counts: tables.counts,
+  };
 
-router.get('/status', requireAuth, async (req, res) => {
+  await storage.writeRaw(userDbKey(userId), req.file.buffer);
+  await storage.writeJSON(userMetaKey(userId), meta);
+
+  res.json({ success: true, syncedAt: meta.lastSync, counts: tables.counts });
+}));
+
+router.get('/status', requireAuth, asyncHandler(async (req, res) => {
   const userId = req.userId;
-  if (!hasUserDb(userId)) {
+  const dbExists = await hasUserDb(userId);
+  if (!dbExists) {
     return res.json({
       success: true,
       synced: false,
@@ -55,7 +53,7 @@ router.get('/status', requireAuth, async (req, res) => {
   }
   let meta = { lastSync: null };
   try {
-    meta = JSON.parse(fs.readFileSync(path.join(USERS_DIR, userId, 'sync-meta.json'), 'utf8'));
+    meta = (await storage.readJSON(userMetaKey(userId))) || meta;
   } catch (e) {}
   const db = await openUserDb(userId);
   const company = db ? queryGet(db, 'SELECT * FROM company ORDER BY id LIMIT 1') : null;
@@ -69,6 +67,6 @@ router.get('/status', requireAuth, async (req, res) => {
     counts: meta.counts,
     company: company ? { name: company.name, gstin: company.gstin } : null,
   });
-});
+}));
 
 module.exports = router;

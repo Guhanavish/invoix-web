@@ -8,6 +8,7 @@
     "start": "node index.js"
   },
   "dependencies": {
+    "@vercel/blob": "^1.0.0",
     "express": "^4.19.2",
     "multer": "^2.2.0",
     "sql.js": "^1.11.0"

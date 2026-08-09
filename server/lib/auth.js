@@ -1,53 +1,49 @@
 'use strict';
 
 const crypto = require('crypto');
-const fs = require('fs');
-const path = require('path');
-const { USERS_DIR, TOKEN_SECRET, TOKEN_TTL_HOURS } = require('../config');
+const { TOKEN_SECRET, TOKEN_TTL_HOURS } = require('../config');
+const storage = require('./storage');
 
-const USERS_FILE = path.join(USERS_DIR, 'users.json');
+const USERS_KEY = 'users.json';
 
-function loadUsers() {
-  try {
-    return JSON.parse(fs.readFileSync(USERS_FILE, 'utf8'));
-  } catch (e) {
-    return { users: {} };
-  }
+async function loadUsers() {
+  const data = await storage.readJSON(USERS_KEY);
+  return data && data.users ? data : { users: {} };
 }
 
-function saveUsers(store) {
-  fs.writeFileSync(USERS_FILE, JSON.stringify(store, null, 2));
+async function saveUsers(store) {
+  await storage.writeJSON(USERS_KEY, store);
 }
 
 function hashPassword(password, salt) {
   return crypto.scryptSync(String(password), salt, 64).toString('hex');
 }
 
-function findUser(userId) {
-  const store = loadUsers();
+async function findUser(userId) {
+  const store = await loadUsers();
   return store.users[String(userId).toLowerCase()] || null;
 }
 
-function createUser(userId, password) {
+async function createUser(userId, password) {
   const id = String(userId).trim().toLowerCase();
   if (!id) throw new Error('User id is required');
   if (!password || String(password).length < 4) throw new Error('Password must be at least 4 characters');
-  if (findUser(id)) throw new Error('User id already exists');
+  if (await findUser(id)) throw new Error('User id already exists');
 
   const salt = crypto.randomBytes(16).toString('hex');
-  const store = loadUsers();
+  const store = await loadUsers();
   store.users[id] = {
     salt,
     hash: hashPassword(password, salt),
     createdAt: new Date().toISOString(),
   };
-  saveUsers(store);
+  await saveUsers(store);
   return { userId: id };
 }
 
-function verifyUser(userId, password) {
-  const user = findUser(userId);
-  if (!user) return false;
+async function verifyUser(userId, password) {
+  const user = await findUser(userId);
+  if (!user || !user.hash) return false;
   const hash = hashPassword(password, user.salt);
   return crypto.timingSafeEqual(Buffer.from(hash, 'hex'), Buffer.from(user.hash, 'hex'));
 }
@@ -76,4 +72,4 @@ function verifyToken(token) {
   }
 }
 
-module.exports = { createUser, verifyUser, issueToken, verifyToken, findUser };
+module.exports = { createUser, verifyUser, issueToken, verifyToken, findUser, loadUsers };
