@@ -23,8 +23,16 @@ router.post('/register', asyncHandler(async (req, res) => {
   if (!userId || !password) {
     return res.status(400).json({ success: false, error: 'User id and password are required' });
   }
-  const user = await createUser(userId, password);
-  res.json({ success: true, user });
+  const existing = await findUser(id(userId));
+  if (existing) {
+    return res.status(409).json({ success: false, error: 'That user id is already taken. Try signing in, or use Google sign-in.' });
+  }
+  try {
+    const user = await createUser(userId, password);
+    res.json({ success: true, user });
+  } catch (e) {
+    res.status(400).json({ success: false, error: e.message });
+  }
 }));
 
 router.post('/login', asyncHandler(async (req, res) => {

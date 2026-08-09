@@ -90,38 +90,6 @@ export default function Landing() {
               </div>
             </div>
           </div>
-
-          <div className="mock-wrap">
-            <div className="float-chip chip-1">
-              <div className="ico" style={{ background: 'var(--success-soft)', color: 'var(--success)' }}><RefreshCw size={16} /></div>
-              <div>
-                Synced just now
-                <small>INV-0004 from desktop</small>
-              </div>
-            </div>
-            <div className="mock">
-              <div className="mock-top">
-                <div className="mock-title">Sri Balaji Traders <span>· Bengaluru</span></div>
-                <span className="badge badge-sales">B2B · Sales</span>
-              </div>
-              <div className="mock-row"><span className="k">Invoice</span><span className="v">INV-0004</span></div>
-              <div className="mock-row"><span className="k">Date</span><span className="v">02 Aug 2026</span></div>
-              <div className="mock-row"><span className="k">Customer</span><span className="v">Rajesh Kumar &amp; Co</span></div>
-              <div className="mock-row"><span className="k">GSTIN</span><span className="v">29XYZQ5678H2Z1</span></div>
-              <div className="mock-row"><span className="k">CGST + SGST</span><span className="v">₹2,160</span></div>
-              <div className="mock-total">
-                <span className="k">Grand Total</span>
-                <span className="v">₹14,160</span>
-              </div>
-            </div>
-            <div className="float-chip chip-2">
-              <div className="ico" style={{ background: 'var(--primary-soft)', color: 'var(--primary)' }}><ShieldCheck size={16} /></div>
-              <div>
-                Secured by login
-                <small>User id + password</small>
-              </div>
-            </div>
-          </div>
         </div>
       </section>
 

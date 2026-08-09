@@ -74,7 +74,17 @@ export default function GoogleButton({ onSuccess, onError, label = 'Continue wit
     return () => { active = false; };
   }, [clientId, onSuccess, onError]);
 
-  if (!clientId) return null;
+  if (!clientId) {
+    return (
+      <div className="google-unavailable">
+        <div className="google-unavailable-title">Google sign-in is not enabled on this portal yet.</div>
+        <div className="google-unavailable-sub">
+          The site owner needs to add a <code>GOOGLE_CLIENT_ID</code> in the Vercel settings, then redeploy.
+          You can still sign in with a user id and password below.
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: 8, width: '100%' }}>

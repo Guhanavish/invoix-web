@@ -516,6 +516,17 @@ table.tbl tbody tr:last-child td { border-bottom: none; }
 .divider { display: flex; align-items: center; text-align: center; margin: 18px 0; color: var(--muted); font-size: 12.5px; }
 .divider::before, .divider::after { content: ''; flex: 1; border-bottom: 1px solid var(--line); }
 .divider span { padding: 0 12px; }
+.google-unavailable {
+  background: var(--surface);
+  border: 1px dashed var(--line);
+  border-radius: var(--radius-sm);
+  padding: 14px 16px;
+  text-align: center;
+  margin-bottom: 4px;
+}
+.google-unavailable-title { color: var(--ink); font-size: 14px; font-weight: 600; margin-bottom: 6px; }
+.google-unavailable-sub { color: var(--muted); font-size: 12.5px; line-height: 1.55; }
+.google-unavailable code { background: var(--bg); border: 1px solid var(--line); border-radius: 4px; padding: 1px 6px; font-size: 12px; }
 .err-box { background: var(--danger-soft); color: var(--danger); border: 1px solid #f5c2c3; border-radius: var(--radius-sm); padding: 11px 14px; font-size: 13.5px; margin-bottom: 16px; }
 .ok-box { background: var(--success-soft); color: var(--success); border: 1px solid #bfe6d4; border-radius: var(--radius-sm); padding: 11px 14px; font-size: 13.5px; margin-bottom: 16px; }
 
