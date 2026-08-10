@@ -21,25 +21,30 @@ function blobLib() {
   return blob;
 }
 
-let blobAccess = 'public';
-let blobAccessChecked = false;
+// @vercel/blob v2 requires an explicit access mode ('public'|'private') that
+// must match the store configuration. Detect it once per instance: try the
+// public URL, fall back to the private URL.
+let blobAccess = null;
 
-async function putBlob(key, buffer, contentType) {
-  const { put } = blobLib();
-  if (!blobAccessChecked) {
-    blobAccessChecked = true;
-    try {
-      await put(key, buffer, { token: TOKEN, access: 'public', contentType, addRandomSuffix: false });
-      return;
-    } catch (e) {
-      if (/private access/i.test(e.message)) {
-        blobAccess = 'private';
-      } else {
-        throw e;
-      }
-    }
+async function accessMode() {
+  if (blobAccess) return blobAccess;
+  const { get } = blobLib();
+  const tryGet = (access) => get('__invoix_access_probe__', { token: TOKEN, access });
+  let pubErr = null;
+  try {
+    await tryGet('public');
+    blobAccess = 'public';
+    return blobAccess;
+  } catch (e) {
+    pubErr = e;
   }
-  await put(key, buffer, { token: TOKEN, access: blobAccess, contentType, addRandomSuffix: false });
+  try {
+    await tryGet('private');
+    blobAccess = 'private';
+    return blobAccess;
+  } catch (e) {
+    throw pubErr;
+  }
 }
 
 function localFile(key) {
@@ -50,11 +55,11 @@ async function readRaw(key) {
   if (USE_BLOB) {
     const { get } = blobLib();
     try {
-      const res = await get(key, { token: TOKEN });
-      if (!res || !res.url) return null;
-      const r = await fetch(res.url);
-      if (!r.ok) return null;
-      return Buffer.from(await r.arrayBuffer());
+      const r = await get(key, { token: TOKEN, access: await accessMode() });
+      if (!r) return null;
+      const chunks = [];
+      for await (const chunk of r.stream) chunks.push(Buffer.from(chunk));
+      return Buffer.concat(chunks);
     } catch (e) {
       return null;
     }
@@ -65,7 +70,14 @@ async function readRaw(key) {
 
 async function writeRaw(key, buffer, contentType = 'application/octet-stream') {
   if (USE_BLOB) {
-    await putBlob(key, buffer, contentType);
+    const { put } = blobLib();
+    await put(key, buffer, {
+      token: TOKEN,
+      access: await accessMode(),
+      contentType,
+      addRandomSuffix: false,
+      allowOverwrite: true,
+    });
     return;
   }
   const f = localFile(key);
@@ -75,8 +87,11 @@ async function writeRaw(key, buffer, contentType = 'application/octet-stream') {
 
 async function del(key) {
   if (USE_BLOB) {
-    const { del: blobDel } = blobLib();
-    await blobDel(key, { token: TOKEN }).catch(() => {});
+    const { get, del: blobDel } = blobLib();
+    try {
+      const r = await get(key, { token: TOKEN, access: await accessMode() });
+      if (r) await blobDel(r.blob.url, { token: TOKEN }).catch(() => {});
+    } catch (e) {}
     return;
   }
   const f = localFile(key);
@@ -87,8 +102,8 @@ async function exists(key) {
   if (USE_BLOB) {
     const { get } = blobLib();
     try {
-      const res = await get(key, { token: TOKEN });
-      return !!(res && res.url);
+      const r = await get(key, { token: TOKEN, access: await accessMode() });
+      return !!r;
     } catch (e) {
       return false;
     }
@@ -106,4 +121,4 @@ async function writeJSON(key, obj) {
   await writeRaw(key, Buffer.from(JSON.stringify(obj, null, 2), 'utf8'), 'application/json');
 }
 
-module.exports = { readRaw, writeRaw, readJSON, writeJSON, del, exists, USE_BLOB };
+module.exports = { readRaw, writeRaw, readJSON, writeJSON, del, exists, USE_BLOB, accessMode };

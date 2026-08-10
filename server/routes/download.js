@@ -3,7 +3,9 @@
 const express = require('express');
 const fs = require('fs');
 const path = require('path');
+const { Readable } = require('stream');
 const { DOWNLOADS_DIR } = require('../config');
+const { accessMode } = require('../lib/storage');
 
 const TOKEN = process.env.BLOB_READ_WRITE_TOKEN;
 const USE_BLOB = !!TOKEN;
@@ -38,7 +40,7 @@ function localInfo(name) {
 async function listInstallers() {
   if (USE_BLOB) {
     const { list } = require('@vercel/blob');
-    const res = await list({ token: TOKEN, prefix: BLOB_PREFIX });
+    const res = await list({ token: TOKEN, prefix: BLOB_PREFIX, limit: 1000 });
     return res.blobs
       .filter((b) => /\.(zip|exe)$/i.test(b.pathname))
       .map((b) => ({
@@ -63,11 +65,15 @@ router.get('/installer/:name', asyncHandler(async (req, res) => {
   }
   if (USE_BLOB) {
     const { get } = require('@vercel/blob');
-    const blobRes = await get(BLOB_PREFIX + name, { token: TOKEN }).catch(() => null);
-    if (blobRes && blobRes.url) {
-      return res.redirect(302, blobRes.url);
+    const blobRes = await get(BLOB_PREFIX + name, { token: TOKEN, access: await accessMode() });
+    if (!blobRes) {
+      return res.status(404).json({ success: false, error: 'Installer not found' });
     }
-    return res.status(404).json({ success: false, error: 'Installer not found' });
+    res.setHeader('Content-Type', blobRes.blob.contentType || 'application/octet-stream');
+    res.setHeader('Content-Disposition', `attachment; filename="${name}"`);
+    if (blobRes.blob.size) res.setHeader('Content-Length', String(blobRes.blob.size));
+    Readable.fromWeb(blobRes.stream).pipe(res);
+    return;
   }
   const full = path.join(DOWNLOADS_DIR, name);
   if (!fs.existsSync(full)) {

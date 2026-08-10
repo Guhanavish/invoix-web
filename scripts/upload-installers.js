@@ -25,14 +25,16 @@ async function putFile(name, buffer, contentType) {
       access: 'public',
       contentType,
       addRandomSuffix: false,
+      allowOverwrite: true,
     });
   } catch (e) {
-    if (/private access/i.test(e.message)) {
+    if (e.name === 'BlobAccessError' || /access/i.test(e.message)) {
       return await put('downloads/' + name, buffer, {
         token: TOKEN,
         access: 'private',
         contentType,
         addRandomSuffix: false,
+        allowOverwrite: true,
       });
     }
     throw e;
