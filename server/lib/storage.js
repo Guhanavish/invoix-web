@@ -22,28 +22,43 @@ function blobLib() {
 }
 
 // @vercel/blob v2 requires an explicit access mode ('public'|'private') that
-// must match the store configuration. Detect it once per instance: try the
-// public URL, fall back to the private URL.
+// must match the store configuration. Detect it once per instance by probing
+// the PUT API: it reliably rejects a mismatch with BlobAccessError, whereas a
+// GET probe is ambiguous (the wrong host just 404s).
 let blobAccess = null;
 
 async function accessMode() {
   if (blobAccess) return blobAccess;
-  const { get } = blobLib();
-  const tryGet = (access) => get('__invoix_access_probe__', { token: TOKEN, access });
-  let pubErr = null;
+  const { put } = blobLib();
   try {
-    await tryGet('public');
+    await put('__invoix_access_probe__', Buffer.from('probe'), {
+      token: TOKEN,
+      access: 'public',
+      contentType: 'text/plain',
+      addRandomSuffix: false,
+      allowOverwrite: true,
+    });
     blobAccess = 'public';
-    return blobAccess;
   } catch (e) {
-    pubErr = e;
+    if (e && e.name === 'BlobAccessError') {
+      blobAccess = 'private';
+    } else {
+      throw e;
+    }
   }
+  return blobAccess;
+}
+
+// Fall back to the opposite access mode once if the cached mode was wrong.
+async function withFlip(access, fn) {
   try {
-    await tryGet('private');
-    blobAccess = 'private';
-    return blobAccess;
+    return await fn(access);
   } catch (e) {
-    throw pubErr;
+    if (!e || e.name !== 'BlobAccessError') throw e;
+    const flipped = access === 'public' ? 'private' : 'public';
+    const out = await fn(flipped);
+    blobAccess = flipped;
+    return out;
   }
 }
 
@@ -55,11 +70,13 @@ async function readRaw(key) {
   if (USE_BLOB) {
     const { get } = blobLib();
     try {
-      const r = await get(key, { token: TOKEN, access: await accessMode() });
-      if (!r) return null;
-      const chunks = [];
-      for await (const chunk of r.stream) chunks.push(Buffer.from(chunk));
-      return Buffer.concat(chunks);
+      return await withFlip(await accessMode(), async (access) => {
+        const r = await get(key, { token: TOKEN, access });
+        if (!r) return null;
+        const chunks = [];
+        for await (const chunk of r.stream) chunks.push(Buffer.from(chunk));
+        return Buffer.concat(chunks);
+      });
     } catch (e) {
       return null;
     }
@@ -71,13 +88,15 @@ async function readRaw(key) {
 async function writeRaw(key, buffer, contentType = 'application/octet-stream') {
   if (USE_BLOB) {
     const { put } = blobLib();
-    await put(key, buffer, {
-      token: TOKEN,
-      access: await accessMode(),
-      contentType,
-      addRandomSuffix: false,
-      allowOverwrite: true,
-    });
+    await withFlip(await accessMode(), (access) =>
+      put(key, buffer, {
+        token: TOKEN,
+        access,
+        contentType,
+        addRandomSuffix: false,
+        allowOverwrite: true,
+      })
+    );
     return;
   }
   const f = localFile(key);
@@ -121,4 +140,4 @@ async function writeJSON(key, obj) {
   await writeRaw(key, Buffer.from(JSON.stringify(obj, null, 2), 'utf8'), 'application/json');
 }
 
-module.exports = { readRaw, writeRaw, readJSON, writeJSON, del, exists, USE_BLOB, accessMode };
+module.exports = { readRaw, writeRaw, readJSON, writeJSON, del, exists, USE_BLOB, accessMode, withFlip };
