@@ -2,13 +2,15 @@ import React, { useEffect, useState } from 'react';
 import { NavLink, Outlet, useNavigate } from 'react-router-dom';
 import {
   LayoutDashboard, FileText, Users, Package, BookOpen, BarChart3,
-  Download, LogOut, Receipt, ShieldCheck, RefreshCw,
+  Download, LogOut, Receipt, ShieldCheck, RefreshCw, FilePlus2, Inbox,
 } from 'lucide-react';
 import { api, fmtDateTime } from '../api';
 
 const NAV = [
   { to: '/app', label: 'Dashboard', icon: LayoutDashboard, end: true },
   { to: '/app/invoices', label: 'Invoices', icon: FileText },
+  { to: '/app/invoices/new', label: 'New Invoice', icon: FilePlus2 },
+  { to: '/app/pending', label: 'Pending Invoices', icon: Inbox },
   { to: '/app/customers', label: 'Customers', icon: Users },
   { to: '/app/products', label: 'Products', icon: Package },
   { to: '/app/ledger', label: 'Ledger', icon: BookOpen },

@@ -22,6 +22,7 @@ function createApp() {
   app.use('/api/auth', require('./routes/auth'));
   app.use('/api/sync', require('./routes/sync'));
   app.use('/api/data', require('./routes/data'));
+  app.use('/api/pending', require('./routes/pending'));
   app.use('/api/download', require('./routes/download'));
   app.use('/api/config', require('./routes/config'));
 

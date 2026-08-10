@@ -108,6 +108,9 @@ export default function Login() {
                 required
               />
             </div>
+            <div style={{ textAlign: 'right', marginTop: 4 }}>
+              <Link to="/forgot" style={{ color: 'var(--primary)', fontSize: 13, fontWeight: 600 }}>Forgot password?</Link>
+            </div>
             <button className="btn btn-primary" style={{ width: '100%', marginTop: 6 }} disabled={busy}>
               {busy ? <span className="spinner" /> : <LogIn size={16} />}
               {busy ? 'Signing in…' : 'Sign in'}

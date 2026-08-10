@@ -57,6 +57,24 @@ export const api = {
     if (res && res.token) this.setSession(res.token, res.user);
     return res;
   },
+  async forgotPassword(userId, email) {
+    return this.post('/auth/forgot', { userId, email });
+  },
+  async resetPassword(userId, email, otp, newPassword) {
+    return this.post('/auth/reset', { userId, email, otp, newPassword });
+  },
+  async createPendingInvoice(data) {
+    return this.post('/pending', data);
+  },
+  async getPendingInvoices() {
+    return this.get('/pending');
+  },
+  async deletePendingInvoice(id) {
+    const res = await fetch(`/api/pending/${id}`, { method: 'DELETE', headers: this.token ? { Authorization: `Bearer ${this.token}` } : {} });
+    const body = await res.json().catch(() => null);
+    if (!res.ok) throw new Error((body && body.error) || `Request failed (${res.status})`);
+    return body;
+  },
 };
 
 let _configCache = null;

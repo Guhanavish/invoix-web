@@ -7,6 +7,7 @@ import GoogleButton from '../components/GoogleButton';
 export default function Register() {
   const navigate = useNavigate();
   const [userId, setUserId] = useState('');
+  const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [confirm, setConfirm] = useState('');
   const [error, setError] = useState('');
@@ -29,7 +30,7 @@ export default function Register() {
     }
     setBusy(true);
     try {
-      const res = await api.post('/auth/register', { userId, password });
+      const res = await api.post('/auth/register', { userId, password, email });
       setOk(`Account "${res.user.userId}" created. Signing you in…`);
       const login = await api.post('/auth/login', { userId, password });
       api.setSession(login.token, login.user);
@@ -98,6 +99,22 @@ export default function Register() {
                 required
                 autoFocus
               />
+            </div>
+            <div className="field">
+              <label htmlFor="rEmail">Email</label>
+              <input
+                id="rEmail"
+                className="input"
+                type="email"
+                placeholder="you@example.com"
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                autoComplete="email"
+                required
+              />
+              <small style={{ color: 'var(--muted)', fontSize: 12, display: 'block', marginTop: 4 }}>
+                Used only for password reset OTPs.
+              </small>
             </div>
             <div className="field">
               <label htmlFor="rPassword">Password</label>
