@@ -17,7 +17,10 @@ function createApp() {
     next();
   });
 
-  app.get('/api/health', (req, res) => res.json({ ok: true, time: new Date().toISOString() }));
+  app.get('/api/health', (req, res) => {
+    const { storageStatus } = require('./lib/storage');
+    res.json({ ok: true, time: new Date().toISOString(), storage: storageStatus() });
+  });
 
   app.use('/api/auth', require('./routes/auth'));
   app.use('/api/sync', require('./routes/sync'));

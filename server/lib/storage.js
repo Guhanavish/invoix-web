@@ -8,11 +8,23 @@ const TOKEN = process.env.BLOB_READ_WRITE_TOKEN;
 const USE_BLOB = !!TOKEN;
 const IS_VERCEL = !!process.env.VERCEL;
 
-if (IS_VERCEL && !TOKEN) {
-  console.error(
-    '[storage] Running on Vercel without BLOB_READ_WRITE_TOKEN. Persistent storage will fail. ' +
-    'Create a Blob store in the Vercel dashboard and connect it to this project.'
-  );
+// On Vercel, Blob is the ONLY durable store — /tmp is wiped on every redeploy.
+// If the token is missing we must fail loudly instead of silently writing to
+// /tmp (that is what caused the account data loss).
+const STORAGE_UNSET_ERROR = 'Account storage is unavailable. Check that Vercel Blob is connected to this project.';
+
+function assertStorageConfigured() {
+  if (IS_VERCEL && !TOKEN) {
+    throw new Error(STORAGE_UNSET_ERROR);
+  }
+}
+
+function storageStatus() {
+  return {
+    vercel: !!IS_VERCEL,
+    connected: !!TOKEN,
+    mode: blobAccess || null,
+  };
 }
 
 let blob = null;
@@ -75,6 +87,7 @@ function localFile(key) {
 }
 
 async function readRaw(key) {
+  assertStorageConfigured();
   if (USE_BLOB) {
     const { get } = blobLib();
     try {
@@ -94,17 +107,22 @@ async function readRaw(key) {
 }
 
 async function writeRaw(key, buffer, contentType = 'application/octet-stream') {
+  assertStorageConfigured();
   if (USE_BLOB) {
     const { put } = blobLib();
-    await withFlip(await accessMode(), (access) =>
-      put(key, buffer, {
+    await withFlip(await accessMode(), async (access) => {
+      const res = await put(key, buffer, {
         token: TOKEN,
         access,
         contentType,
         addRandomSuffix: false,
         allowOverwrite: true,
-      })
-    );
+      });
+      if (!res || !res.url || res.size !== buffer.length) {
+        throw new Error(`Write to storage failed for "${key}" (uploaded ${res ? res.size : 0} of ${buffer.length} bytes)`);
+      }
+      return res;
+    });
     return;
   }
   const f = localFile(key);
@@ -113,6 +131,7 @@ async function writeRaw(key, buffer, contentType = 'application/octet-stream') {
 }
 
 async function del(key) {
+  assertStorageConfigured();
   if (USE_BLOB) {
     const { get, del: blobDel } = blobLib();
     try {
@@ -126,6 +145,7 @@ async function del(key) {
 }
 
 async function exists(key) {
+  assertStorageConfigured();
   if (USE_BLOB) {
     const { get } = blobLib();
     try {
@@ -148,4 +168,4 @@ async function writeJSON(key, obj) {
   await writeRaw(key, Buffer.from(JSON.stringify(obj, null, 2), 'utf8'), 'application/json');
 }
 
-module.exports = { readRaw, writeRaw, readJSON, writeJSON, del, exists, USE_BLOB, accessMode, withFlip };
+module.exports = { readRaw, writeRaw, readJSON, writeJSON, del, exists, USE_BLOB, accessMode, withFlip, storageStatus };
