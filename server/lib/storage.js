@@ -118,8 +118,8 @@ async function writeRaw(key, buffer, contentType = 'application/octet-stream') {
         addRandomSuffix: false,
         allowOverwrite: true,
       });
-      if (!res || !res.url || res.size !== buffer.length) {
-        throw new Error(`Write to storage failed for "${key}" (uploaded ${res ? res.size : 0} of ${buffer.length} bytes)`);
+      if (!res || !res.url || res.pathname !== key) {
+        throw new Error(`Write to storage failed for "${key}" (no blob returned by the API)`);
       }
       return res;
     });
