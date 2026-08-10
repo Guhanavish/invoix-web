@@ -21,10 +21,18 @@ function blobLib() {
   return blob;
 }
 
+// Some Blob API access-mismatch errors surface as generic errors rather than
+// BlobAccessError, so detect by message as well.
+function isAccessError(e) {
+  if (!e) return false;
+  if (e.name === 'BlobAccessError') return true;
+  return /public access on a private store|private access|store access/i.test(String(e.message || ''));
+}
+
 // @vercel/blob v2 requires an explicit access mode ('public'|'private') that
 // must match the store configuration. Detect it once per instance by probing
-// the PUT API: it reliably rejects a mismatch with BlobAccessError, whereas a
-// GET probe is ambiguous (the wrong host just 404s).
+// the PUT API: it reliably rejects a mismatch, whereas a GET probe is
+// ambiguous (the wrong host just 404s).
 let blobAccess = null;
 
 async function accessMode() {
@@ -40,7 +48,7 @@ async function accessMode() {
     });
     blobAccess = 'public';
   } catch (e) {
-    if (e && e.name === 'BlobAccessError') {
+    if (isAccessError(e)) {
       blobAccess = 'private';
     } else {
       throw e;
@@ -54,7 +62,7 @@ async function withFlip(access, fn) {
   try {
     return await fn(access);
   } catch (e) {
-    if (!e || e.name !== 'BlobAccessError') throw e;
+    if (!isAccessError(e)) throw e;
     const flipped = access === 'public' ? 'private' : 'public';
     const out = await fn(flipped);
     blobAccess = flipped;
