@@ -21,6 +21,27 @@ function blobLib() {
   return blob;
 }
 
+let blobAccess = 'public';
+let blobAccessChecked = false;
+
+async function putBlob(key, buffer, contentType) {
+  const { put } = blobLib();
+  if (!blobAccessChecked) {
+    blobAccessChecked = true;
+    try {
+      await put(key, buffer, { token: TOKEN, access: 'public', contentType, addRandomSuffix: false });
+      return;
+    } catch (e) {
+      if (/private access/i.test(e.message)) {
+        blobAccess = 'private';
+      } else {
+        throw e;
+      }
+    }
+  }
+  await put(key, buffer, { token: TOKEN, access: blobAccess, contentType, addRandomSuffix: false });
+}
+
 function localFile(key) {
   return path.join(USERS_DIR, ...key.split('/'));
 }
@@ -44,8 +65,7 @@ async function readRaw(key) {
 
 async function writeRaw(key, buffer, contentType = 'application/octet-stream') {
   if (USE_BLOB) {
-    const { put } = blobLib();
-    await put(key, buffer, { access: 'public', token: TOKEN, contentType });
+    await putBlob(key, buffer, contentType);
     return;
   }
   const f = localFile(key);
