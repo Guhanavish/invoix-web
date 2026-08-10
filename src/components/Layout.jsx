@@ -7,12 +7,12 @@ import {
 import { api, fmtDateTime } from '../api';
 
 const NAV = [
-  { to: '/', label: 'Dashboard', icon: LayoutDashboard, end: true },
-  { to: '/invoices', label: 'Invoices', icon: FileText },
-  { to: '/customers', label: 'Customers', icon: Users },
-  { to: '/products', label: 'Products', icon: Package },
-  { to: '/ledger', label: 'Ledger', icon: BookOpen },
-  { to: '/reports', label: 'Reports', icon: BarChart3 },
+  { to: '/app', label: 'Dashboard', icon: LayoutDashboard, end: true },
+  { to: '/app/invoices', label: 'Invoices', icon: FileText },
+  { to: '/app/customers', label: 'Customers', icon: Users },
+  { to: '/app/products', label: 'Products', icon: Package },
+  { to: '/app/ledger', label: 'Ledger', icon: BookOpen },
+  { to: '/app/reports', label: 'Reports', icon: BarChart3 },
 ];
 
 export default function Layout() {
