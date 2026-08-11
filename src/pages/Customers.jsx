@@ -5,13 +5,23 @@ import { Empty, Loading, PageHead } from '../components/ui';
 
 export default function Customers() {
   const [customers, setCustomers] = useState(null);
+  const [error, setError] = useState('');
   const [counts, setCounts] = useState({});
   const [search, setSearch] = useState('');
 
   const load = () => {
     const params = new URLSearchParams();
     if (search) params.set('search', search);
-    api.get(`/data/customers?${params.toString()}`).then((res) => setCustomers(res.customers));
+    api
+      .get(`/data/customers?${params.toString()}`)
+      .then((res) => {
+        setCustomers(res.customers);
+        setError('');
+      })
+      .catch((e) => {
+        setCustomers([]);
+        setError(e.message);
+      });
   };
 
   useEffect(() => {
@@ -60,7 +70,9 @@ export default function Customers() {
       </div>
 
       <div className="card">
-        {customers === null ? (
+        {error ? (
+          <Empty icon={<Users size={22} />} title="Couldn't load customers" sub={error} />
+        ) : customers === null ? (
           <Loading />
         ) : customers.length === 0 ? (
           <Empty icon={<Users size={22} />} title="No customers found" sub="Customers added in the desktop app will appear here." />

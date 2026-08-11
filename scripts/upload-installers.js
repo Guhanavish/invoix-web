@@ -48,8 +48,9 @@ async function main() {
     const buffer = fs.readFileSync(full);
     const ext = path.extname(name).toLowerCase();
     const contentType = ext === '.exe' ? 'application/octet-stream' : 'application/zip';
+    console.log(`Uploading ${name} (${(buffer.length / 1024 / 1024).toFixed(1)} MB)...`);
     const res = await putFile(name, buffer, contentType);
-    console.log(`Uploaded ${name} (${(buffer.length / 1024 / 1024).toFixed(1)} MB) -> ${res.url}`);
+    console.log(`Uploaded ${name} -> ${res.url}`);
   }
   console.log('Done.');
 }

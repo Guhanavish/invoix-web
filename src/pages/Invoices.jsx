@@ -6,6 +6,7 @@ import { Badge, Empty, Loading, PageHead } from '../components/ui';
 
 export default function Invoices() {
   const [invoices, setInvoices] = useState(null);
+  const [error, setError] = useState('');
   const [search, setSearch] = useState('');
   const [type, setType] = useState('');
   const [status, setStatus] = useState('');
@@ -15,7 +16,16 @@ export default function Invoices() {
     if (search) params.set('search', search);
     if (type) params.set('type', type);
     if (status) params.set('overdue', 'yes');
-    api.get(`/data/invoices?${params.toString()}`).then((res) => setInvoices(res.invoices));
+    api
+      .get(`/data/invoices?${params.toString()}`)
+      .then((res) => {
+        setInvoices(res.invoices);
+        setError('');
+      })
+      .catch((e) => {
+        setInvoices([]);
+        setError(e.message);
+      });
   };
 
   useEffect(() => {
@@ -78,7 +88,9 @@ export default function Invoices() {
       </div>
 
       <div className="card">
-        {invoices === null ? (
+        {error ? (
+          <Empty icon={<FileText size={22} />} title="Couldn't load invoices" sub={error} />
+        ) : invoices === null ? (
           <Loading />
         ) : invoices.length === 0 ? (
           <Empty icon={<FileText size={22} />} title="No invoices found" sub="Try a different search, or create invoices in the desktop app." />

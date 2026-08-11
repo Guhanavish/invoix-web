@@ -9,6 +9,7 @@ const blankItem = { description: '', hsn_code: '', quantity: 1, unit: 'Nos', rat
 export default function NewInvoice() {
   const navigate = useNavigate();
   const [company, setCompany] = useState(null);
+  const [companyError, setCompanyError] = useState('');
   const [customer, setCustomer] = useState({ name: '', gstin: '', address: '', city: '', state: '', state_code: '', pincode: '', phone: '', email: '' });
   const [invoice, setInvoice] = useState({ invoice_date: new Date().toISOString().slice(0, 10), due_date: '', type: 'Sales', supply_type: 'B2B', place_of_supply: '', notes: '', terms: '' });
   const [items, setItems] = useState([{ ...blankItem }]);
@@ -23,8 +24,10 @@ export default function NewInvoice() {
         if (res.active.state_code && !invoice.place_of_supply) {
           setInvoice((v) => ({ ...v, place_of_supply: String(res.active.state_code) }));
         }
+      } else {
+        setCompanyError('Your business profile has not been synced yet.');
       }
-    }).catch(() => {});
+    }).catch((e) => setCompanyError(e.message));
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
@@ -116,7 +119,17 @@ export default function NewInvoice() {
       {error && <div className="err-box" style={{ marginBottom: 16 }}>{error}</div>}
       {ok && <div className="ok-box" style={{ marginBottom: 16 }}>{ok}</div>}
 
-      {!company ? <Loading /> : (
+      {companyError ? (
+        <div className="card" style={{ padding: 20 }}>
+          <div className="label">Couldn't load your business profile</div>
+          <p style={{ color: 'var(--muted)', marginTop: 8 }}>
+            {companyError} Sync your desktop app first (Desktop → Settings → Web Sync), then come back here.
+          </p>
+          <Link to="/app" className="btn btn-ghost btn-sm" style={{ marginTop: 12 }}>
+            <ArrowLeft size={14} /> Go to Dashboard
+          </Link>
+        </div>
+      ) : !company ? <Loading /> : (
         <form onSubmit={submit}>
           <div className="card" style={{ padding: 20, marginBottom: 16 }}>
             <h3 style={{ marginBottom: 14, fontSize: 15 }}>Customer</h3>

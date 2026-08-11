@@ -5,13 +5,23 @@ import { Empty, Loading, PageHead } from '../components/ui';
 
 export default function Products() {
   const [products, setProducts] = useState(null);
+  const [error, setError] = useState('');
   const [search, setSearch] = useState('');
 
   useEffect(() => {
     const params = new URLSearchParams();
     if (search) params.set('search', search);
     const t = setTimeout(() => {
-      api.get(`/data/products?${params.toString()}`).then((res) => setProducts(res.products));
+      api
+        .get(`/data/products?${params.toString()}`)
+        .then((res) => {
+          setProducts(res.products);
+          setError('');
+        })
+        .catch((e) => {
+          setProducts([]);
+          setError(e.message);
+        });
     }, 350);
     return () => clearTimeout(t);
   }, [search]);
@@ -57,7 +67,9 @@ export default function Products() {
       </div>
 
       <div className="card">
-        {products === null ? (
+        {error ? (
+          <Empty icon={<Package size={22} />} title="Couldn't load products" sub={error} />
+        ) : products === null ? (
           <Loading />
         ) : products.length === 0 ? (
           <Empty icon={<Package size={22} />} title="No products found" sub="Products added in the desktop app will appear here." />

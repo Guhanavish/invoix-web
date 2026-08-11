@@ -132,9 +132,9 @@ export default function Dashboard() {
               <span className="k">Records</span>
               <span className="v">{sync?.counts ? Object.values(sync.counts).reduce((a, b) => a + b, 0) : 0}</span>
             </div>
-            <a className="btn btn-ghost btn-sm" href="#/app/invoices" style={{ marginTop: 4 }}>
+            <Link to="/app/invoices" className="btn btn-ghost btn-sm" style={{ marginTop: 4 }}>
               Open workspace <ArrowUpRight size={14} />
-            </a>
+            </Link>
           </div>
         </div>
 

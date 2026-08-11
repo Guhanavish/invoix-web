@@ -5,6 +5,7 @@ import { Empty, Loading, PageHead } from '../components/ui';
 
 export default function Ledger() {
   const [entries, setEntries] = useState(null);
+  const [error, setError] = useState('');
   const [balances, setBalances] = useState(null);
   const [search, setSearch] = useState('');
   const [customerId, setCustomerId] = useState('');
@@ -18,7 +19,16 @@ export default function Ledger() {
     if (search) params.set('search', search);
     if (customerId) params.set('customer_id', customerId);
     const t = setTimeout(() => {
-      api.get(`/data/ledger?${params.toString()}`).then((res) => setEntries(res.entries));
+      api
+        .get(`/data/ledger?${params.toString()}`)
+        .then((res) => {
+          setEntries(res.entries);
+          setError('');
+        })
+        .catch((e) => {
+          setEntries([]);
+          setError(e.message);
+        });
     }, 350);
     return () => clearTimeout(t);
   }, [search, customerId]);
@@ -64,7 +74,9 @@ export default function Ledger() {
       )}
 
       <div className="card">
-        {entries === null ? (
+        {error ? (
+          <Empty icon={<BookOpen size={22} />} title="Couldn't load ledger" sub={error} />
+        ) : entries === null ? (
           <Loading />
         ) : entries.length === 0 ? (
           <Empty icon={<BookOpen size={22} />} title="No ledger entries" sub="Ledger entries made in the desktop app will appear here." />

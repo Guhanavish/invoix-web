@@ -37,7 +37,7 @@ export default function PendingInvoices() {
     <div>
       <PageHead title="Pending Invoices" sub="Drafts created on the web. They become real invoices only after you verify and approve them in the desktop app.">
         <button className="btn btn-ghost btn-sm" onClick={load}><RefreshCw size={14} /> Refresh</button>
-        <Link to="/app/new-invoice" className="btn btn-primary btn-sm"><FilePlus2 size={14} /> New draft</Link>
+        <Link to="/app/invoices/new" className="btn btn-primary btn-sm"><FilePlus2 size={14} /> New draft</Link>
       </PageHead>
 
       {error && <div className="err-box" style={{ marginBottom: 16 }}>{error}</div>}

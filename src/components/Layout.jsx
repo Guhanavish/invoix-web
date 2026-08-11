@@ -8,8 +8,8 @@ import { api, fmtDateTime } from '../api';
 
 const NAV = [
   { to: '/app', label: 'Dashboard', icon: LayoutDashboard, end: true },
-  { to: '/app/invoices', label: 'Invoices', icon: FileText },
-  { to: '/app/invoices/new', label: 'New Invoice', icon: FilePlus2 },
+  { to: '/app/invoices', label: 'Invoices', icon: FileText, end: true },
+  { to: '/app/invoices/new', label: 'New Invoice', icon: FilePlus2, end: true },
   { to: '/app/pending', label: 'Pending Invoices', icon: Inbox },
   { to: '/app/customers', label: 'Customers', icon: Users },
   { to: '/app/products', label: 'Products', icon: Package },
