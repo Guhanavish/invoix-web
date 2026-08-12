@@ -1,5 +1,5 @@
-/* ============================================================
-   E-INVOICE PRO WEB — Design System
+﻿/* ============================================================
+E-INVOICE PRO WEB — Design System
    Style: Minimalism / Swiss Modernism 2.0 (Invoice & Billing)
    Fonts: Space Grotesk (display) · DM Sans (body) · JetBrains Mono (data)
    ============================================================ */
@@ -598,3 +598,4 @@ table.tbl tbody tr:last-child td { border-bottom: none; }
   .download-card { padding: 32px 24px; }
   .detail-grid { grid-template-columns: 1fr; }
 }
+

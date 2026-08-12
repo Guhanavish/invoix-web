@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { Users, Search, Download } from 'lucide-react';
 import { api, fmtMoney } from '../api';
+import { useAutoRefresh } from '../useAutoSync';
 import { Empty, Loading, PageHead } from '../components/ui';
 
 export default function Customers() {
@@ -22,9 +23,6 @@ export default function Customers() {
         setCustomers([]);
         setError(e.message);
       });
-  };
-
-  useEffect(() => {
     api.get('/data/invoices').then((res) => {
       const c = {};
       res.invoices.forEach((inv) => {
@@ -32,7 +30,13 @@ export default function Customers() {
       });
       setCounts(c);
     }).catch(() => {});
+  };
+
+  useEffect(() => {
+    load();
   }, []);
+
+  useAutoRefresh(load);
 
   const exportCsv = () => {
     if (!customers) return;

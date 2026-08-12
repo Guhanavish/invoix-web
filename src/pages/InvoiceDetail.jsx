@@ -1,7 +1,8 @@
 import React, { useEffect, useState } from 'react';
 import { Link, useParams } from 'react-router-dom';
-import { ArrowLeft, FileText, Truck } from 'lucide-react';
+import { ArrowLeft, FileText } from 'lucide-react';
 import { api, fmtMoney, fmtDate, invoiceStatus } from '../api';
+import { useAutoRefresh } from '../useAutoSync';
 import { Badge, Empty, Loading } from '../components/ui';
 
 export default function InvoiceDetail() {
@@ -9,14 +10,21 @@ export default function InvoiceDetail() {
   const [data, setData] = useState(null);
   const [error, setError] = useState('');
 
-  useEffect(() => {
+  const load = () => {
     api.get(`/data/invoices/${id}`).then(setData).catch((e) => setError(e.message));
+  };
+
+  useEffect(() => {
+    setData(null);
+    load();
   }, [id]);
+
+  useAutoRefresh(load);
 
   if (error) return <Empty icon={<FileText size={22} />} title="Invoice not found" sub={error} />;
   if (!data) return <Loading />;
 
-  const { invoice: inv, eway } = data;
+  const { invoice: inv } = data;
   const st = invoiceStatus(inv);
   const totalTax = (Number(inv.cgst_total) || 0) + (Number(inv.sgst_total) || 0) + (Number(inv.igst_total) || 0);
 
@@ -106,31 +114,6 @@ export default function InvoiceDetail() {
             <div className="dl"><span className="k">Place of supply</span><span className="v">{inv.place_of_supply || '—'}</span></div>
             <div className="dl"><span className="k">Phone</span><span className="v">{inv.customer_phone || '—'}</span></div>
             <div className="dl"><span className="k">Email</span><span className="v">{inv.customer_email || '—'}</span></div>
-          </div>
-
-          <div className="card" style={{ padding: 22 }}>
-            <div className="bento-head" style={{ alignItems: 'center' }}>
-              <h3 style={{ display: 'flex', alignItems: 'center', gap: 8 }}><Truck size={16} /> E-Way bill</h3>
-              <Badge status="neutral">{eway ? 'GENERATED' : 'NONE'}</Badge>
-            </div>
-            {eway ? (
-              <>
-                <div className="dl"><span className="k">E-way no</span><span className="v">{eway.eway_bill_no}</span></div>
-                <div className="dl"><span className="k">Valid until</span><span className="v">{fmtDate(eway.valid_to)}</span></div>
-                <div className="dl"><span className="k">Transporter</span><span className="v">{eway.transporter_name || '—'}</span></div>
-                <div className="dl"><span className="k">Vehicle</span><span className="v">{eway.vehicle_no || '—'}</span></div>
-                <div className="dl"><span className="k">Distance</span><span className="v">{eway.distance ? `${eway.distance} km` : '—'}</span></div>
-              </>
-            ) : (
-              <p style={{ color: 'var(--muted)', fontSize: 13.5 }}>No e-way bill linked to this invoice.</p>
-            )}
-            {inv.irn && (
-              <>
-                <div className="bento-head" style={{ marginTop: 14, marginBottom: 10 }}><h3 style={{ fontSize: 14 }}>E-Invoice (IRN)</h3></div>
-                <div className="dl"><span className="k">IRN</span><span className="v" style={{ fontSize: 11 }}>{inv.irn}</span></div>
-                <div className="dl"><span className="k">Ack no</span><span className="v" style={{ fontSize: 11 }}>{inv.ack_no || '—'}</span></div>
-              </>
-            )}
           </div>
         </div>
       </div>

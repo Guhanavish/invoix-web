@@ -2,7 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import {
   ArrowRight, CheckCircle2, Download, Receipt, ShieldCheck, BarChart3,
-  BookOpen, FileText, Globe2, MonitorDown, RefreshCw, Sparkles, Lock,
+  BookOpen, FileText, MonitorDown, RefreshCw, Sparkles, Lock,
 } from 'lucide-react';
 import { api, fmtBytes } from '../api';
 
@@ -38,7 +38,7 @@ export default function Landing() {
           <div className="brand-mark"><Receipt size={18} /></div>
           <div>
             <div className="brand-name" style={{ color: scrolled ? 'var(--ink)' : '#fff' }}>Invoix</div>
-            <div className="brand-sub" style={{ color: scrolled ? 'var(--muted)' : '#6f84a5' }}>Billing · GST · E-Way</div>
+            <div className="brand-sub" style={{ color: scrolled ? 'var(--muted)' : '#6f84a5' }}>Billing · GST · Sync</div>
           </div>
         </div>
         <div className="land-links" style={scrolled ? {} : {}}>
@@ -98,14 +98,13 @@ export default function Landing() {
           <span className="eyebrow">Everything in one place</span>
           <h2>Built for serious GST billing.</h2>
           <p>
-            The desktop app handles creation — invoices, e-way bills, e-invoices and ledger.
+            The desktop app handles creation — GST tax invoices, PDFs and ledger.
             The web portal gives you a live, read-only mirror of it all.
           </p>
         </div>
         <div className="feat-grid">
           {[
-            { icon: FileText, title: 'Invoices & E-Invoicing', desc: 'Tax invoices with IRN generation, e-invoice JSON and PDF export built in.' },
-            { icon: Globe2, title: 'E-Way Bills', desc: 'Part A / Part B generation with transporter details, validity windows and distance.' },
+            { icon: FileText, title: 'GST Tax Invoices', desc: 'CGST / SGST / IGST computed automatically, with PDF export built in.' },
             { icon: BarChart3, title: 'GSTR-1 & GSTR-3B', desc: 'Export-ready summaries with B2B / B2C splits and net tax liability at a glance.' },
             { icon: BookOpen, title: 'Customer Ledger', desc: 'Running balances per customer with debit, credit and aging buckets.' },
             { icon: ShieldCheck, title: 'Protected by login', desc: 'Your workspace is gated by a user id and password. Only you see the data.' },
@@ -154,8 +153,8 @@ export default function Landing() {
             <span className="eyebrow light">Get started</span>
             <h2>Download Invoix setup.</h2>
             <p>
-              The complete GST billing suite for Windows — invoices, e-way bills, e-invoicing,
-              GSTR reports, customer ledger and PDF generation.
+              The complete GST billing suite for Windows — tax invoices, GSTR reports,
+              customer ledger, PDF generation and automatic web sync.
             </p>
             <div className="dl-meta">
               <div className="m">Version<b>v1.0.0</b></div>
@@ -175,10 +174,10 @@ export default function Landing() {
             <div className="dl-list">
               {[
                 'GST tax invoices with automatic CGST / SGST / IGST',
-                'E-invoice (IRN) and e-way bill generation',
                 'GSTR-1 and GSTR-3B export-ready reports',
                 'Customer ledger with running balances',
                 'PDF invoice printing and Excel import / export',
+                'Automatic two-way sync with the web portal',
               ].map((t) => (
                 <div className="dl-item" key={t}>
                   <CheckCircle2 size={16} />

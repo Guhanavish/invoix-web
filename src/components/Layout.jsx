@@ -1,10 +1,11 @@
-import React, { useEffect, useState } from 'react';
+import React from 'react';
 import { NavLink, Outlet, useNavigate } from 'react-router-dom';
 import {
   LayoutDashboard, FileText, Users, Package, BookOpen, BarChart3,
   Download, LogOut, Receipt, ShieldCheck, RefreshCw, FilePlus2, Inbox,
 } from 'lucide-react';
 import { api, fmtDateTime } from '../api';
+import { useSyncStatus, forceSyncCheck } from '../useAutoSync';
 
 const NAV = [
   { to: '/app', label: 'Dashboard', icon: LayoutDashboard, end: true },
@@ -19,20 +20,7 @@ const NAV = [
 
 export default function Layout() {
   const navigate = useNavigate();
-  const [sync, setSync] = useState({ loading: true, synced: null, lastSync: null });
-
-  const loadSync = async () => {
-    try {
-      const res = await api.get('/sync/status');
-      setSync({ loading: false, synced: res.synced, lastSync: res.lastSync });
-    } catch {
-      setSync({ loading: false, synced: false, lastSync: null });
-    }
-  };
-
-  useEffect(() => {
-    loadSync();
-  }, []);
+  const sync = useSyncStatus();
 
   const logout = () => {
     api.clearSession();
@@ -99,7 +87,7 @@ export default function Layout() {
               <span className="dot" />
               {sync.loading ? 'Checking…' : sync.synced ? `Synced ${fmtDateTime(sync.lastSync)}` : 'No data synced'}
             </div>
-            <button className="icon-btn" title="Refresh sync status" onClick={loadSync}>
+            <button className="icon-btn" title="Refresh sync status" onClick={forceSyncCheck}>
               <RefreshCw size={14} />
             </button>
           </div>

@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { BarChart3, Download } from 'lucide-react';
 import { api, fmtMoney, fmtDate } from '../api';
+import { useAutoRefresh } from '../useAutoSync';
 import { Empty, Loading, PageHead } from '../components/ui';
 
 const MONTHS = Array.from({ length: 6 }, (_, i) => {
@@ -35,6 +36,8 @@ export default function Reports() {
   useEffect(() => {
     load();
   }, [month]);
+
+  useAutoRefresh(load);
 
   if (error) return <Empty icon={<BarChart3 size={22} />} title="No data to report" sub={error} />;
   if (!g1 || !g3 || !aging) return <Loading />;

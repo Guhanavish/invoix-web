@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+﻿import React, { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { Receipt, UserPlus, ShieldCheck } from 'lucide-react';
 import { api } from '../api';
@@ -64,8 +64,8 @@ export default function Register() {
           <div className="auth-quote">
             <div className="mini-av"><ShieldCheck size={17} /></div>
             <blockquote>
-              “I invoice from the office and check reports from home. The web portal
-              is my business in my pocket.”
+"I invoice from the office and check reports from home. The web portal
+              is my business in my pocket."
             </blockquote>
           </div>
         </div>
@@ -156,3 +156,4 @@ export default function Register() {
     </div>
   );
 }
+

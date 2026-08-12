@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { BookOpen, Search } from 'lucide-react';
 import { api, fmtMoney, fmtDate } from '../api';
+import { useAutoRefresh } from '../useAutoSync';
 import { Empty, Loading, PageHead } from '../components/ui';
 
 export default function Ledger() {
@@ -10,28 +11,29 @@ export default function Ledger() {
   const [search, setSearch] = useState('');
   const [customerId, setCustomerId] = useState('');
 
-  useEffect(() => {
-    api.get('/data/ledger/balances').then((res) => setBalances(res.balances)).catch(() => {});
-  }, []);
-
-  useEffect(() => {
+  const load = () => {
     const params = new URLSearchParams();
     if (search) params.set('search', search);
     if (customerId) params.set('customer_id', customerId);
-    const t = setTimeout(() => {
-      api
-        .get(`/data/ledger?${params.toString()}`)
-        .then((res) => {
-          setEntries(res.entries);
-          setError('');
-        })
-        .catch((e) => {
-          setEntries([]);
-          setError(e.message);
-        });
-    }, 350);
+    api
+      .get(`/data/ledger?${params.toString()}`)
+      .then((res) => {
+        setEntries(res.entries);
+        setError('');
+      })
+      .catch((e) => {
+        setEntries([]);
+        setError(e.message);
+      });
+    api.get('/data/ledger/balances').then((res) => setBalances(res.balances)).catch(() => {});
+  };
+
+  useEffect(() => {
+    const t = setTimeout(load, 350);
     return () => clearTimeout(t);
   }, [search, customerId]);
+
+  useAutoRefresh(load);
 
   const totalDebit = (entries || []).reduce((s, e) => s + Number(e.debit || 0), 0);
   const totalCredit = (entries || []).reduce((s, e) => s + Number(e.credit || 0), 0);

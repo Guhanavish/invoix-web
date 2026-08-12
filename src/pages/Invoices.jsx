@@ -2,6 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { FileText, Search, Download } from 'lucide-react';
 import { api, fmtMoney, fmtDate, invoiceStatus } from '../api';
+import { useAutoRefresh } from '../useAutoSync';
 import { Badge, Empty, Loading, PageHead } from '../components/ui';
 
 export default function Invoices() {
@@ -31,6 +32,8 @@ export default function Invoices() {
   useEffect(() => {
     load();
   }, []);
+
+  useAutoRefresh(load);
 
   useEffect(() => {
     const t = setTimeout(load, 350);

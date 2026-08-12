@@ -2,6 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { Inbox, RefreshCw, FilePlus2, Trash2 } from 'lucide-react';
 import { api, fmtMoney, fmtDateTime } from '../api';
+import { useAutoRefresh } from '../useAutoSync';
 import { Badge, Empty, Loading, PageHead } from '../components/ui';
 
 export default function PendingInvoices() {
@@ -15,6 +16,8 @@ export default function PendingInvoices() {
   useEffect(() => {
     load();
   }, []);
+
+  useAutoRefresh(load);
 
   const cancel = async (id) => {
     if (!window.confirm('Delete this draft? It has not been approved in the desktop app.')) return;

@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { Package, Search, Download } from 'lucide-react';
 import { api, fmtMoney } from '../api';
+import { useAutoRefresh } from '../useAutoSync';
 import { Empty, Loading, PageHead } from '../components/ui';
 
 export default function Products() {
@@ -8,23 +9,27 @@ export default function Products() {
   const [error, setError] = useState('');
   const [search, setSearch] = useState('');
 
-  useEffect(() => {
+  const load = () => {
     const params = new URLSearchParams();
     if (search) params.set('search', search);
-    const t = setTimeout(() => {
-      api
-        .get(`/data/products?${params.toString()}`)
-        .then((res) => {
-          setProducts(res.products);
-          setError('');
-        })
-        .catch((e) => {
-          setProducts([]);
-          setError(e.message);
-        });
-    }, 350);
+    api
+      .get(`/data/products?${params.toString()}`)
+      .then((res) => {
+        setProducts(res.products);
+        setError('');
+      })
+      .catch((e) => {
+        setProducts([]);
+        setError(e.message);
+      });
+  };
+
+  useEffect(() => {
+    const t = setTimeout(load, 350);
     return () => clearTimeout(t);
   }, [search]);
+
+  useAutoRefresh(load);
 
   const exportCsv = () => {
     if (!products) return;

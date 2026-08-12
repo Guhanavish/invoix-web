@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+﻿import React, { useState } from 'react';
 import { Link, useNavigate, useLocation } from 'react-router-dom';
 import { Receipt, LogIn, ShieldCheck } from 'lucide-react';
 import { api } from '../api';
@@ -54,14 +54,14 @@ export default function Login() {
           <span className="eyebrow light">Your business, mirrored</span>
           <h2>Every entry from your desktop app.<br />Right here on the web.</h2>
           <p>
-            Sign in with the user id and password you created — the same credentials you use
+Sign in with the user id and password you created — the same credentials you use
             to connect the desktop app in Settings → Web Sync.
           </p>
           <div className="auth-quote">
             <div className="mini-av"><ShieldCheck size={17} /></div>
             <blockquote>
-              “I invoice from the office and check reports from home. The web portal
-              is my business in my pocket.”
+"I invoice from the office and check reports from home. The web portal
+              is my business in my pocket."
             </blockquote>
           </div>
         </div>
@@ -101,7 +101,7 @@ export default function Login() {
                 id="password"
                 className="input"
                 type="password"
-                placeholder="••••••••"
+                placeholder="········"
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
                 autoComplete="current-password"
@@ -125,3 +125,4 @@ export default function Login() {
     </div>
   );
 }
+

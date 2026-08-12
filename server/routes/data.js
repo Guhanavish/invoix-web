@@ -111,8 +111,7 @@ router.get('/invoices/:id', route(async (db) => {
   );
   if (!invoice) return null;
   invoice.items = queryAll(db, 'SELECT * FROM invoice_items WHERE invoice_id = ?', [invoice.id]);
-  const eway = queryGet(db, 'SELECT * FROM eway_bills WHERE invoice_id = ? ORDER BY id DESC LIMIT 1', [invoice.id]);
-  return { invoice, eway };
+  return { invoice };
 }));
 
 router.get('/customers', route(async (db) => {

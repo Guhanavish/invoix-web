@@ -2,6 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { FilePlus2, Trash2, Plus, ArrowLeft } from 'lucide-react';
 import { api, fmtMoney } from '../api';
+import { useAutoRefresh } from '../useAutoSync';
 import { PageHead, Loading } from '../components/ui';
 
 const blankItem = { description: '', hsn_code: '', quantity: 1, unit: 'Nos', rate: 0, discount_percent: 0, gst_rate: 18, cess: 0 };
@@ -17,7 +18,7 @@ export default function NewInvoice() {
   const [ok, setOk] = useState('');
   const [busy, setBusy] = useState(false);
 
-  useEffect(() => {
+  const loadCompany = () => {
     api.get('/data/company').then((res) => {
       if (res && res.active) {
         setCompany(res.active);
@@ -28,8 +29,14 @@ export default function NewInvoice() {
         setCompanyError('Your business profile has not been synced yet.');
       }
     }).catch((e) => setCompanyError(e.message));
+  };
+
+  useEffect(() => {
+    loadCompany();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
+
+  useAutoRefresh(loadCompany);
 
   const setCust = (k) => (e) => setCustomer((v) => ({ ...v, [k]: e.target.value }));
   const setInv = (k) => (e) => setInvoice((v) => ({ ...v, [k]: e.target.value }));

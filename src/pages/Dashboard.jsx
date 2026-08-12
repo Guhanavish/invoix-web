@@ -8,6 +8,7 @@ import {
   AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer,
 } from 'recharts';
 import { api, fmtMoney, fmtDate, fmtDateTime, invoiceStatus } from '../api';
+import { useAutoRefresh } from '../useAutoSync';
 import { StatCard, Badge, Empty, Loading, PageHead } from '../components/ui';
 
 export default function Dashboard() {
@@ -15,10 +16,16 @@ export default function Dashboard() {
   const [sync, setSync] = useState(null);
   const [error, setError] = useState('');
 
-  useEffect(() => {
+  const load = () => {
     api.get('/data/dashboard').then(setData).catch((e) => setError(e.message));
     api.get('/sync/status').then(setSync).catch(() => {});
+  };
+
+  useEffect(() => {
+    load();
   }, []);
+
+  useAutoRefresh(load);
 
   if (error) {
     return (

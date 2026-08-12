@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+﻿import React, { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { Receipt, ShieldCheck, KeyRound, MailCheck } from 'lucide-react';
 import { api } from '../api';
@@ -75,8 +75,8 @@ export default function ForgotPassword() {
           <div className="auth-quote">
             <div className="mini-av"><ShieldCheck size={17} /></div>
             <blockquote>
-              “A one-time code, sent only to your registered email, keeps
-              your business data protected.”
+"A one-time code, sent only to your registered email, keeps
+              your business data protected."
             </blockquote>
           </div>
         </div>
@@ -190,3 +190,4 @@ export default function ForgotPassword() {
     </div>
   );
 }
+
