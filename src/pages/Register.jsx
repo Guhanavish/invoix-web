@@ -28,11 +28,24 @@ export default function Register() {
       setError('Passwords do not match');
       return;
     }
-    setBusy(true);
+setBusy(true);
     try {
       const res = await api.post('/auth/register', { userId, password, email });
       setOk(`Account "${res.user.userId}" created. Signing you in…`);
-      const login = await api.post('/auth/login', { userId, password });
+      if (res.token) {
+        api.setSession(res.token, res.user);
+        setTimeout(() => navigate('/app', { replace: true }), 600);
+        return;
+      }
+      let login = null;
+      for (let i = 0; i < 5 && !login; i++) {
+        try {
+          login = await api.post('/auth/login', { userId, password });
+        } catch (e) {
+          if (i < 4) await new Promise((r) => setTimeout(r, 800 * (i + 1)));
+          else throw e;
+        }
+      }
       api.setSession(login.token, login.user);
       setTimeout(() => navigate('/app', { replace: true }), 600);
     } catch (err) {

@@ -33,7 +33,7 @@ router.post('/register', asyncHandler(async (req, res) => {
   }
   try {
     const user = await createUser(userId, password, email);
-    res.json({ success: true, user });
+    res.json({ success: true, user, token: issueToken(id(userId)) });
   } catch (e) {
     res.status(400).json({ success: false, error: e.message });
   }
