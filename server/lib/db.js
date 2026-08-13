@@ -1,7 +1,9 @@
 'use strict';
 
 const initSqlJs = require('sql.js');
-const path = require('path');
+// Statically reference the wasm binary so serverless bundlers (Vercel) include
+// it in the function trace. sql.js itself loads it via a runtime-computed path.
+require.resolve('sql.js/dist/sql-wasm.wasm');
 const storage = require('./storage');
 
 let SQLPromise = null;

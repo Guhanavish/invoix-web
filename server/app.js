@@ -45,7 +45,7 @@ function createApp() {
   app.use((err, req, res, next) => {
     console.error('[api error]', err);
     if (res.headersSent) return next(err);
-    res.status(500).json({ success: false, error: 'Internal server error' });
+    res.status(500).json({ success: false, error: (err && err.message) || 'Internal server error' });
   });
 
   return app;
