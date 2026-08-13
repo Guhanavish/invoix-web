@@ -23,7 +23,7 @@ router.post('/upload', requireAuth, upload.single('db'), asyncHandler(async (req
   }
   const userId = req.userId;
 
-  const SQL = await (require('sql.js'))();
+  const SQL = await (require('sql.js/dist/sql-asm.js'))();
   const sqlDb = new SQL.Database(req.file.buffer);
   const tables = countTables(sqlDb);
   sqlDb.close();

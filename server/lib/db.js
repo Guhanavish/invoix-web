@@ -1,9 +1,9 @@
 'use strict';
 
-const initSqlJs = require('sql.js');
-// Statically reference the wasm binary so serverless bundlers (Vercel) include
-// it in the function trace. sql.js itself loads it via a runtime-computed path.
-require.resolve('sql.js/dist/sql-wasm.wasm');
+// Use sql.js's pure-JS asm build. The wasm build needs a .wasm binary at
+// runtime that serverless bundlers (Vercel) do not reliably ship, which made
+// every sql.js call return a 500. asm.js has no binary file dependency.
+const initSqlJs = require('sql.js/dist/sql-asm.js');
 const storage = require('./storage');
 
 let SQLPromise = null;

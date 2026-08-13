@@ -1,12 +1,4 @@
 {
-  "functions": {
-    "api/index.js": {
-      "includeFiles": [
-        "server/node_modules/sql.js/dist/sql-wasm.wasm",
-        "node_modules/sql.js/dist/sql-wasm.wasm"
-      ]
-    }
-  },
   "rewrites": [
     { "source": "/api/:path*", "destination": "/api/index.js" },
     { "source": "/(.*)", "destination": "/index.html" }
