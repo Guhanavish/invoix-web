@@ -12,11 +12,12 @@ function asyncHandler(fn) {
 }
 
 // guard ensures the user has synced data, opens their DB, runs fn, and sends the JSON response.
+// fn receives (db, req) so routes can read query params.
 async function guard(req, res, fn) {
   if (!(await hasUserDb(req.userId))) {
     return res.status(404).json({ success: false, error: 'No data synced yet' });
   }
-  const result = await withUserDb(req.userId, fn);
+  const result = await withUserDb(req.userId, (db) => fn(db, req));
   if (result === null) {
     return res.status(404).json({ success: false, error: 'No data synced yet' });
   }
@@ -26,12 +27,12 @@ async function guard(req, res, fn) {
 // route(fn) => a handler that awaits guard, so each endpoint stays a single clean block.
 const route = (fn) => asyncHandler(async (req, res) => { await guard(req, res, fn); });
 
-router.get('/company', route(async (db) => {
+router.get('/company', route(async (db, req) => {
   const companies = queryAll(db, 'SELECT * FROM company ORDER BY id');
   return { companies, active: companies[0] || null };
 }));
 
-router.get('/dashboard', route(async (db) => {
+router.get('/dashboard', route(async (db, req) => {
   const cid = Number(req.query.company_id) || 1;
   const totalCustomers = Number(queryGet(db, 'SELECT COUNT(*) as cnt FROM customers').cnt);
   const totalProducts = Number(queryGet(db, 'SELECT COUNT(*) as cnt FROM products').cnt);
@@ -80,7 +81,7 @@ router.get('/dashboard', route(async (db) => {
   };
 }));
 
-router.get('/invoices', route(async (db) => {
+router.get('/invoices', route(async (db, req) => {
   const { search, from, to, type, company_id, overdue } = req.query;
   let q = `SELECT i.*, c.name as customer_name, c.gstin as customer_gstin
            FROM invoices i JOIN customers c ON i.customer_id = c.id WHERE 1=1`;
@@ -100,7 +101,7 @@ router.get('/invoices', route(async (db) => {
   return { invoices: queryAll(db, q, params) };
 }));
 
-router.get('/invoices/:id', route(async (db) => {
+router.get('/invoices/:id', route(async (db, req) => {
   const invoice = queryGet(
     db,
     `SELECT i.*, c.name as customer_name, c.gstin as customer_gstin, c.address as customer_address,
@@ -114,7 +115,7 @@ router.get('/invoices/:id', route(async (db) => {
   return { invoice };
 }));
 
-router.get('/customers', route(async (db) => {
+router.get('/customers', route(async (db, req) => {
   const search = req.query.search;
   if (search) {
     return { customers: queryAll(db, 'SELECT * FROM customers WHERE name LIKE ? OR gstin LIKE ? OR phone LIKE ? ORDER BY name', [`%${search}%`, `%${search}%`, `%${search}%`]) };
@@ -122,14 +123,14 @@ router.get('/customers', route(async (db) => {
   return { customers: queryAll(db, 'SELECT * FROM customers ORDER BY name') };
 }));
 
-router.get('/customers/:id', route(async (db) => {
+router.get('/customers/:id', route(async (db, req) => {
   const customer = queryGet(db, 'SELECT * FROM customers WHERE id = ?', [Number(req.params.id)]);
   if (!customer) return null;
   const invoices = queryAll(db, 'SELECT * FROM invoices WHERE customer_id = ? ORDER BY id DESC', [customer.id]);
   return { customer, invoices };
 }));
 
-router.get('/products', route(async (db) => {
+router.get('/products', route(async (db, req) => {
   const search = req.query.search;
   if (search) {
     return { products: queryAll(db, 'SELECT * FROM products WHERE name LIKE ? OR hsn_code LIKE ? ORDER BY name', [`%${search}%`, `%${search}%`]) };
@@ -137,7 +138,7 @@ router.get('/products', route(async (db) => {
   return { products: queryAll(db, 'SELECT * FROM products ORDER BY name') };
 }));
 
-router.get('/ledger', route(async (db) => {
+router.get('/ledger', route(async (db, req) => {
   const { company_id, customer_id, from, to, search } = req.query;
   let q = `SELECT l.*, c.name as customer_name, c.gstin as customer_gstin
            FROM ledger_entries l JOIN customers c ON l.customer_id = c.id WHERE 1=1`;
@@ -151,7 +152,7 @@ router.get('/ledger', route(async (db) => {
   return { entries: queryAll(db, q, params) };
 }));
 
-router.get('/ledger/balances', route(async (db) => {
+router.get('/ledger/balances', route(async (db, req) => {
   const companyId = Number(req.query.company_id) || 1;
   const balances = queryAll(
     db,
@@ -167,7 +168,7 @@ router.get('/ledger/balances', route(async (db) => {
   return { balances };
 }));
 
-router.get('/reports/gstr1', route(async (db) => {
+router.get('/reports/gstr1', route(async (db, req) => {
   const from = req.query.from || '1900-01-01';
   const to = req.query.to || '2999-12-31';
   const cid = Number(req.query.company_id) || 1;
@@ -197,7 +198,7 @@ router.get('/reports/gstr1', route(async (db) => {
   };
 }));
 
-router.get('/reports/gstr3b', route(async (db) => {
+router.get('/reports/gstr3b', route(async (db, req) => {
   const from = req.query.from || '1900-01-01';
   const to = req.query.to || '2999-12-31';
   const cid = Number(req.query.company_id) || 1;
@@ -239,7 +240,7 @@ router.get('/reports/gstr3b', route(async (db) => {
   return { sales: s, salesList: sales, purchases: p, purchasesList: purchases, netTaxLiability: s.totalTax - p.totalTax };
 }));
 
-router.get('/reports/aging', route(async (db) => {
+router.get('/reports/aging', route(async (db, req) => {
   const cid = Number(req.query.company_id) || 1;
   const today = new Date().toISOString().slice(0, 10);
   const overdue = queryAll(
