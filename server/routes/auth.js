@@ -140,7 +140,13 @@ router.post('/google', asyncHandler(async (req, res) => {
     }
   } catch (e) {
     console.error('[auth/google] storage error:', e);
-    return res.status(500).json({ success: false, error: 'Account storage is unavailable. Check that Vercel Blob is connected to this project.' });
+    const isStorageUnset = e && /Account storage is unavailable/i.test(e.message);
+    return res.status(500).json({
+      success: false,
+      error: isStorageUnset
+        ? 'Account storage is unavailable. Check that Vercel Blob is connected to this project.'
+        : 'Google sign-in failed: ' + (e.message || 'storage error'),
+    });
   }
 
   res.json({
