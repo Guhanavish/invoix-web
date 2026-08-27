@@ -1,6 +1,6 @@
 ﻿import React, { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { Receipt, UserPlus, ShieldCheck } from 'lucide-react';
+import { Receipt, UserPlus, ShieldCheck, ArrowRight } from 'lucide-react';
 import { api } from '../api';
 import GoogleButton from '../components/GoogleButton';
 
@@ -28,10 +28,10 @@ export default function Register() {
       setError('Passwords do not match');
       return;
     }
-setBusy(true);
+    setBusy(true);
     try {
       const res = await api.post('/auth/register', { userId, password, email });
-      setOk(`Account "${res.user.userId}" created. Signing you in…`);
+      setOk(`Account "${res.user.userId}" set. Opening folio…`);
       if (res.token) {
         api.setSession(res.token, res.user);
         setTimeout(() => navigate('/app', { replace: true }), 600);
@@ -41,9 +41,9 @@ setBusy(true);
       for (let i = 0; i < 5 && !login; i++) {
         try {
           login = await api.post('/auth/login', { userId, password });
-        } catch (e) {
+        } catch (err) {
           if (i < 4) await new Promise((r) => setTimeout(r, 800 * (i + 1)));
-          else throw e;
+          else throw err;
         }
       }
       api.setSession(login.token, login.user);
@@ -58,27 +58,25 @@ setBusy(true);
     <div className="auth">
       <div className="auth-brand">
         <div style={{ position: 'relative', zIndex: 1 }}>
-          <div className="brand" style={{ paddingBottom: 0 }}>
+          <div className="brand" style={{ paddingBottom: 0, border: 'none' }}>
             <div className="brand-mark"><Receipt size={18} /></div>
             <div>
-              <div className="brand-name">Invoix</div>
-              <div className="brand-sub">Billing · GST · E-Way</div>
+              <div className="brand-name" style={{ color: '#fdfcf8' }}>Invoix</div>
+              <div className="brand-sub" style={{ color: '#9a9590' }}>Ledger · Billing · GST</div>
             </div>
           </div>
         </div>
         <div className="inner">
-          <span className="eyebrow light">One account, two worlds</span>
-          <h2>Create your portal account.</h2>
+          <span className="eyebrow light" style={{ color: '#c4a99a' }}>One account, two presses</span>
+          <h2>Create your <i>folio.</i></h2>
           <p>
-            Use the same user id and password in the desktop app's
-            <b style={{ color: '#fff' }}> Settings → Web Sync </b>
-            section so your invoices flow from the app to the web automatically.
+            The same user id you set here goes into the desktop app's
+            <b style={{ color: '#fdfcf8', fontWeight: 600 }}> Settings → Web Sync</b>. Your invoices are then pressed to the web automatically.
           </p>
           <div className="auth-quote">
             <div className="mini-av"><ShieldCheck size={17} /></div>
             <blockquote>
-"I invoice from the office and check reports from home. The web portal
-              is my business in my pocket."
+              "I set the ledger once in the shop; the portal kept it. My books, always set."
             </blockquote>
           </div>
         </div>
@@ -88,7 +86,7 @@ setBusy(true);
         <div className="auth-box">
           <span className="eyebrow">Create workspace</span>
           <h1>Register</h1>
-          <p>Pick a user id and password. Data syncs to this account.</p>
+          <p style={{ fontFamily: 'var(--font-editorial)', fontStyle: 'italic' }}>Pick a user id — your ledger's name.</p>
 
           {error && <div className="err-box">{error}</div>}
           {ok && <div className="ok-box">{ok}</div>}
@@ -97,7 +95,7 @@ setBusy(true);
             <GoogleButton
               onSuccess={onGoogleSuccess}
               onError={onGoogleError}
-              label="Create an account with the same Google account you use in the Invoix desktop app"
+              label="Create with the same Google account you use in the desktop app"
             />
             <div className="divider"><span>or create with user id</span></div>
             <div className="field">
@@ -105,7 +103,7 @@ setBusy(true);
               <input
                 id="rUserId"
                 className="input"
-                placeholder="e.g. yourbusiness"
+                placeholder="e.g. mehta-fabrics"
                 value={userId}
                 onChange={(e) => setUserId(e.target.value)}
                 autoComplete="username"
@@ -125,8 +123,8 @@ setBusy(true);
                 autoComplete="email"
                 required
               />
-              <small style={{ color: 'var(--muted)', fontSize: 12, display: 'block', marginTop: 4 }}>
-                Used only for password reset OTPs.
+              <small style={{ color: 'var(--stone)', fontFamily: 'var(--font-editorial)', fontStyle: 'italic', fontSize: 12, display: 'block', marginTop: 4 }}>
+                For password recovery only. Never shared.
               </small>
             </div>
             <div className="field">
@@ -155,18 +153,18 @@ setBusy(true);
                 required
               />
             </div>
-            <button className="btn btn-primary" style={{ width: '100%', marginTop: 6 }} disabled={busy}>
+            <button className="btn btn-primary" style={{ width: '100%', marginTop: 6, borderRadius: 12, padding: '13px' }} disabled={busy}>
               {busy ? <span className="spinner" /> : <UserPlus size={16} />}
-              {busy ? 'Creating…' : 'Create account'}
+              {busy ? 'Setting…' : 'Create folio'}
+              {!busy && <ArrowRight size={14} style={{ opacity: 0.7 }} />}
             </button>
           </form>
 
           <div className="auth-foot">
-            Already registered? <Link to="/login">Sign in</Link>
+            Already set? <Link to="/login">Sign in</Link>
           </div>
         </div>
       </div>
     </div>
   );
 }
-

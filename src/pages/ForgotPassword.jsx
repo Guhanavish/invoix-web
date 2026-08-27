@@ -1,6 +1,6 @@
 ﻿import React, { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { Receipt, ShieldCheck, KeyRound, MailCheck } from 'lucide-react';
+import { Receipt, ShieldCheck, KeyRound, MailCheck, ArrowRight } from 'lucide-react';
 import { api } from '../api';
 
 export default function ForgotPassword() {
@@ -10,7 +10,7 @@ export default function ForgotPassword() {
   const [otp, setOtp] = useState('');
   const [newPassword, setNewPassword] = useState('');
   const [confirm, setConfirm] = useState('');
-  const [step, setStep] = useState(1); // 1 = request OTP, 2 = verify OTP + new password
+  const [step, setStep] = useState(1);
   const [error, setError] = useState('');
   const [ok, setOk] = useState('');
   const [busy, setBusy] = useState(false);
@@ -21,7 +21,7 @@ export default function ForgotPassword() {
     setBusy(true);
     try {
       const res = await api.forgotPassword(userId, email);
-      setOk(res.message || 'OTP sent to your email.');
+      setOk(res.message || 'Code sent to your email.');
       setStep(2);
     } catch (err) {
       setError(err.message);
@@ -44,7 +44,7 @@ export default function ForgotPassword() {
     setBusy(true);
     try {
       await api.resetPassword(userId, email, otp, newPassword);
-      setOk('Password updated. Redirecting to sign in…');
+      setOk('Password set. Opening sign in…');
       setTimeout(() => navigate('/login', { replace: true }), 1200);
     } catch (err) {
       setError(err.message);
@@ -57,26 +57,25 @@ export default function ForgotPassword() {
     <div className="auth">
       <div className="auth-brand">
         <div style={{ position: 'relative', zIndex: 1 }}>
-          <div className="brand" style={{ paddingBottom: 0 }}>
+          <div className="brand" style={{ paddingBottom: 0, border: 'none' }}>
             <div className="brand-mark"><Receipt size={18} /></div>
             <div>
-              <div className="brand-name">Invoix</div>
-              <div className="brand-sub">Billing · GST · E-Way</div>
+              <div className="brand-name" style={{ color: '#fdfcf8' }}>Invoix</div>
+              <div className="brand-sub" style={{ color: '#9a9590' }}>Ledger · Billing · GST</div>
             </div>
           </div>
         </div>
         <div className="inner">
-          <span className="eyebrow light">Account recovery</span>
-          <h2>Lost your password?<br />We'll email you a code.</h2>
+          <span className="eyebrow light" style={{ color: '#c4a99a' }}>Account recovery</span>
+          <h2>Lost your <i>key?</i></h2>
           <p>
-            Enter the user id and the email address linked to your account.
-            An OTP will be emailed to you to set a new password.
+            Enter the user id and the email on file. A one-time code will be pressed
+            to your inbox to set a new password.
           </p>
           <div className="auth-quote">
             <div className="mini-av"><ShieldCheck size={17} /></div>
             <blockquote>
-"A one-time code, sent only to your registered email, keeps
-              your business data protected."
+              "A single code, to your registered email only. Your folio stays shut to others."
             </blockquote>
           </div>
         </div>
@@ -84,10 +83,10 @@ export default function ForgotPassword() {
 
       <div className="auth-form-side">
         <div className="auth-box">
-          <span className="eyebrow">Reset password</span>
-          <h1>{step === 1 ? 'Request a code' : 'Enter the code'}</h1>
-          {step === 1 && <p>We'll send a one-time code to your registered email.</p>}
-          {step === 2 && <p>Enter the 6-digit code and choose a new password.</p>}
+          <span className="eyebrow">Reset</span>
+          <h1>{step === 1 ? 'Request code' : 'Set new key'}</h1>
+          {step === 1 && <p style={{ fontFamily: 'var(--font-editorial)', fontStyle: 'italic' }}>We'll press a code to your email.</p>}
+          {step === 2 && <p style={{ fontFamily: 'var(--font-editorial)', fontStyle: 'italic' }}>Enter the 6-digit code and choose a new password.</p>}
 
           {error && <div className="err-box">{error}</div>}
           {ok && <div className="ok-box">{ok}</div>}
@@ -99,7 +98,7 @@ export default function ForgotPassword() {
                 <input
                   id="fpUserId"
                   className="input"
-                  placeholder="e.g. yourbusiness"
+                  placeholder="e.g. mehta-fabrics"
                   value={userId}
                   onChange={(e) => setUserId(e.target.value)}
                   autoComplete="username"
@@ -120,9 +119,10 @@ export default function ForgotPassword() {
                   required
                 />
               </div>
-              <button className="btn btn-primary" style={{ width: '100%', marginTop: 6 }} disabled={busy}>
+              <button className="btn btn-primary" style={{ width: '100%', marginTop: 6, borderRadius: 12, padding: '13px' }} disabled={busy}>
                 {busy ? <span className="spinner" /> : <MailCheck size={16} />}
-                {busy ? 'Sending…' : 'Send OTP'}
+                {busy ? 'Sending…' : 'Send code'}
+                {!busy && <ArrowRight size={14} style={{ opacity: 0.7 }} />}
               </button>
             </form>
           ) : (
@@ -138,6 +138,7 @@ export default function ForgotPassword() {
                   autoComplete="one-time-code"
                   required
                   autoFocus
+                  style={{ letterSpacing: '0.2em', fontFamily: 'var(--font-mono)' }}
                 />
               </div>
               <div className="field">
@@ -154,40 +155,39 @@ export default function ForgotPassword() {
                 />
               </div>
               <div className="field">
-                <label htmlFor="fpConfirm">Confirm new password</label>
+                <label htmlFor="fpConfirm">Confirm</label>
                 <input
                   id="fpConfirm"
                   className="input"
                   type="password"
-                  placeholder="Repeat your password"
+                  placeholder="Repeat password"
                   value={confirm}
                   onChange={(e) => setConfirm(e.target.value)}
                   autoComplete="new-password"
                   required
                 />
               </div>
-              <button className="btn btn-primary" style={{ width: '100%', marginTop: 6 }} disabled={busy}>
+              <button className="btn btn-primary" style={{ width: '100%', marginTop: 6, borderRadius: 12, padding: '13px' }} disabled={busy}>
                 {busy ? <span className="spinner" /> : <KeyRound size={16} />}
-                {busy ? 'Resetting…' : 'Set new password'}
+                {busy ? 'Setting…' : 'Set password'}
               </button>
               <button
                 type="button"
                 className="btn btn-ghost"
-                style={{ width: '100%', marginTop: 8 }}
+                style={{ width: '100%', marginTop: 10, borderRadius: 12 }}
                 onClick={() => { setStep(1); setError(''); setOk(''); }}
                 disabled={busy}
               >
-                Request a new code
+                Request new code
               </button>
             </form>
           )}
 
           <div className="auth-foot">
-            Remembered it? <Link to="/login">Sign in</Link>
+            Remembered? <Link to="/login">Sign in</Link>
           </div>
         </div>
       </div>
     </div>
   );
 }
-
