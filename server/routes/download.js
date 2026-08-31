@@ -73,6 +73,8 @@ router.get('/installer/:name', asyncHandler(async (req, res) => {
     }
     res.setHeader('Content-Type', blobRes.blob.contentType || 'application/octet-stream');
     res.setHeader('Content-Disposition', `attachment; filename="${name}"`);
+    res.setHeader('X-Content-Type-Options', 'nosniff');
+    res.setHeader('Cache-Control', 'public, max-age=3600');
     if (blobRes.blob.size) res.setHeader('Content-Length', String(blobRes.blob.size));
     Readable.fromWeb(blobRes.stream).pipe(res);
     return;
@@ -81,6 +83,7 @@ router.get('/installer/:name', asyncHandler(async (req, res) => {
   if (!fs.existsSync(full)) {
     return res.status(404).json({ success: false, error: 'Installer not found' });
   }
+  res.setHeader('X-Content-Type-Options', 'nosniff');
   res.download(full, name);
 }));
 

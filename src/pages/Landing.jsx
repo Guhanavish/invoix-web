@@ -3,14 +3,18 @@ import { Link } from 'react-router-dom';
 import {
   ArrowRight, CheckCircle2, Download, Receipt, ShieldCheck, BarChart3,
   BookOpen, FileText, MonitorDown, RefreshCw, Sparkles, Lock, ArrowUpRight, Quote,
+  Package, FolderOpen, AlertCircle, HardDrive, Info, ExternalLink,
 } from 'lucide-react';
 import { api, fmtBytes } from '../api';
 
-const INSTALLER_NAME = 'Invoix Setup 1.0.0.exe';
+const ZIP_NAME = 'Invoix-v1.0.0.zip';
+const EXE_NAME = 'Invoix Setup 1.0.0.exe';
 
 export default function Landing() {
-  const [installer, setInstaller] = useState(null);
+  const [zipFile, setZipFile] = useState(null);
+  const [exeFile, setExeFile] = useState(null);
   const [scrolled, setScrolled] = useState(false);
+  const [showHelp, setShowHelp] = useState(false);
 
   useEffect(() => {
     const onScroll = () => setScrolled(window.scrollY > 24);
@@ -21,15 +25,18 @@ export default function Landing() {
   useEffect(() => {
     api.get('/download/installer/info')
       .then((res) => {
+        const zip = res.files.find((f) => f.name.toLowerCase().endsWith('.zip')) || res.files.find((f) => !f.isExe);
         const exe = res.files.find((f) => f.isExe);
-        setInstaller(exe || res.files.find((f) => f.name === INSTALLER_NAME) || res.files[0]);
+        if (zip) setZipFile(zip);
+        if (exe) setExeFile(exe);
+        // fallback if API uses different naming
+        if (!zip && res.files[0]) setZipFile(res.files.find((f) => f.name === ZIP_NAME) || res.files[0]);
       })
       .catch(() => {});
   }, []);
 
-  const downloadUrl = installer
-    ? `/api/download/installer/${encodeURIComponent(installer.name)}`
-    : `/api/download/installer/${INSTALLER_NAME}`;
+  const zipUrl = zipFile ? `/api/download/installer/${encodeURIComponent(zipFile.name)}` : `/api/download/installer/${ZIP_NAME}`;
+  const exeUrl = exeFile ? `/api/download/installer/${encodeURIComponent(exeFile.name)}` : `/api/download/installer/${EXE_NAME}`;
 
   return (
     <div style={{ background: 'var(--paper)' }}>
@@ -62,20 +69,30 @@ export default function Landing() {
               Every invoice, customer and ledger entry you set in the Invoix desktop atelier
               appears here — typeset, balanced, and ready to present. No exports. No drift.
             </p>
-            <div className="hero-cta">
-              <a className="btn btn-oxide btn-lg" href={downloadUrl} download={installer ? installer.name : INSTALLER_NAME}>
-                <Download size={18} />
-                Download app
+            <div className="hero-cta" style={{ flexWrap: 'wrap' }}>
+              <a className="btn btn-oxide btn-lg" href={zipUrl} download={zipFile ? zipFile.name : ZIP_NAME}>
+                <Package size={18} />
+                Download portable
               </a>
               <Link className="btn btn-ghost btn-lg" to="/login">
                 Open workspace
                 <ArrowRight size={16} />
               </Link>
             </div>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginTop: 10, fontSize: 13, color: '#9a9590', fontFamily: 'var(--font-mono)' }}>
+              <span style={{ display: 'inline-flex', alignItems: 'center', gap: 6 }}><HardDrive size={13} /> ZIP · {zipFile ? fmtBytes(zipFile.size) : '141 MB'} · Windows x64 · No install</span>
+              <span style={{ opacity: 0.5 }}>·</span>
+              <a href={exeUrl} download={exeFile ? exeFile.name : EXE_NAME} style={{ color: '#9a9590', textDecoration: 'underline', textUnderlineOffset: 3 }}>
+                installer exe {exeFile ? `· ${fmtBytes(exeFile.size)}` : ''}
+              </a>
+            </div>
+            <div style={{ marginTop: 8, fontSize: 12, color: '#9a9590', display: 'flex', alignItems: 'center', gap: 6 }}>
+              <ShieldCheck size={12} /> Recommended: ZIP avoids the “Unknown publisher / virus” warning. All packages included — no Node required.
+            </div>
             <div className="hero-stats">
               <div className="hero-stat">
-                <div className="num">{installer ? fmtBytes(installer.size) : '130 MB'}</div>
-                <div className="lbl">Windows · x64</div>
+                <div className="num">{zipFile ? fmtBytes(zipFile.size) : '141 MB'}</div>
+                <div className="lbl">Portable · ZIP</div>
               </div>
               <div className="hero-stat">
                 <div className="num">Offline</div>
@@ -195,21 +212,52 @@ export default function Landing() {
             <h2>Take the press <i style={{ fontWeight: 300 }}>home.</i></h2>
             <p>
               The complete GST billing atelier for Windows — invoices, GSTR reports,
-              ledger, PDFs and live web sync.
+              ledger, PDFs and live web sync. Portable ZIP is recommended to avoid the Windows “Unknown publisher” warning.
             </p>
             <div className="dl-meta">
               <div className="m">Version<b>v1.0.0</b></div>
-              <div className="m">Size<b>{installer ? fmtBytes(installer.size) : '130 MB'}</b></div>
               <div className="m">Platform<b>Windows x64</b></div>
-              <div className="m">Format<b>{installer?.isExe !== false ? 'EXE installer' : 'ZIP'}</b></div>
+              <div className="m">Primary<b>ZIP portable</b></div>
+              <div className="m">Also<b>EXE installer</b></div>
             </div>
-            <a className="btn btn-oxide btn-lg" href={downloadUrl} download={installer ? installer.name : INSTALLER_NAME}>
-              <Download size={18} />
-              Download app
-            </a>
-            <span style={{ display: 'inline-flex', alignItems: 'center', gap: 6, marginLeft: 16, color: '#9a9590', fontSize: 13, fontFamily: 'var(--font-mono)' }}>
-              <Lock size={13} /> Free for your ledger
-            </span>
+
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 12, marginTop: 8 }}>
+              <a className="btn btn-oxide btn-lg" href={zipUrl} download={zipFile ? zipFile.name : ZIP_NAME} style={{ justifyContent: 'center' }}>
+                <Package size={18} />
+                Download portable — ZIP {zipFile ? `· ${fmtBytes(zipFile.size)}` : ''}
+              </a>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+                <a href={exeUrl} download={exeFile ? exeFile.name : EXE_NAME} style={{ display: 'inline-flex', alignItems: 'center', gap: 8, color: '#fdfcf8', fontSize: 13, borderBottom: '1px solid rgba(253,252,248,0.25)', paddingBottom: 2 }}>
+                  <Download size={14} /> Or download installer (EXE {exeFile ? `· ${fmtBytes(exeFile.size)}` : ''})
+                </a>
+                <button onClick={() => setShowHelp((v) => !v)} style={{ background: 'rgba(253,252,248,0.1)', border: '1px solid rgba(253,252,248,0.2)', color: '#fdfcf8', borderRadius: 999, padding: '6px 12px', fontSize: 12, display: 'inline-flex', alignItems: 'center', gap: 6, cursor: 'pointer' }}>
+                  <Info size={12} /> {showHelp ? 'Hide help' : 'Why does Windows warn?'}
+                </button>
+              </div>
+              <span style={{ display: 'inline-flex', alignItems: 'center', gap: 6, color: '#9a9590', fontSize: 12, fontFamily: 'var(--font-mono)' }}>
+                <Lock size={12} /> Free for your ledger · Works offline · All packages bundled
+              </span>
+            </div>
+
+            {showHelp && (
+              <div style={{ marginTop: 16, background: 'rgba(253,252,248,0.06)', border: '1px solid rgba(253,252,248,0.12)', borderRadius: 12, padding: 16 }}>
+                <div style={{ display: 'flex', gap: 10, alignItems: 'flex-start', color: '#fdfcf8' }}>
+                  <AlertCircle size={16} style={{ marginTop: 2, color: '#f59e0b', flexShrink: 0 }} />
+                  <div style={{ fontSize: 13, lineHeight: 1.6, color: '#e8e6e1' }}>
+                    <div style={{ fontWeight: 700, marginBottom: 6, color: '#fdfcf8' }}>The “virus / Unknown publisher” warning is a false positive.</div>
+                    The app is not signed with a paid Microsoft certificate yet (requires a registered business). Windows shows this for every new unsigned app, even when clean.
+                    <div style={{ marginTop: 10, fontWeight: 600 }}>How to run the portable ZIP:</div>
+                    <ol style={{ margin: '6px 0 0 18px', display: 'flex', flexDirection: 'column', gap: 4 }}>
+                      <li>Download the ZIP → Right-click → <b>Extract All…</b> → choose Desktop or Documents.</li>
+                      <li>Open the extracted <b>Invoix</b> folder → double-click <b>Invoix.exe</b>.</li>
+                      <li>If SmartScreen appears: click <b>More info</b> → <b>Run anyway</b>. This is Windows confirming you trust the file.</li>
+                    </ol>
+                    <div style={{ marginTop: 10 }}>The ZIP already contains every package (Electron, database, PDF engine) — no Node.js install needed. Next time, just double-click <b>Invoix.exe</b> again.</div>
+                    <div style={{ marginTop: 8, fontSize: 12, color: '#9a9590' }}>Installer EXE does the same but copies to Program Files and creates a Start Menu entry. Same warning applies.</div>
+                  </div>
+                </div>
+              </div>
+            )}
           </div>
           <div>
             <div className="dl-list">
@@ -226,10 +274,29 @@ export default function Landing() {
                 </div>
               ))}
             </div>
-            <Link to="/login" style={{ display: 'inline-flex', alignItems: 'center', gap: 6, marginTop: 20, color: '#fdfcf8', fontWeight: 600, fontSize: 14, borderBottom: '1px solid rgba(253,252,248,0.2)', paddingBottom: 2 }}>
+            <div style={{ marginTop: 16, background: 'rgba(253,252,248,0.06)', border: '1px solid rgba(253,252,248,0.1)', borderRadius: 10, padding: 12 }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 8, color: '#fdfcf8', fontWeight: 600, fontSize: 13, marginBottom: 6 }}>
+                <FolderOpen size={14} /> What’s inside the ZIP?
+              </div>
+              <div style={{ fontSize: 12, lineHeight: 1.6, color: '#c8c5c0' }}>
+                All 240 files, same as the installer — <b style={{ color: '#fdfcf8' }}>Invoix.exe</b>, <b style={{ color: '#fdfcf8' }}>resources/</b> (app code), <b style={{ color: '#fdfcf8' }}>locales/</b>. Just extracted. No packages to install, works on a clean Windows PC offline.
+              </div>
+            </div>
+            <Link to="/login" style={{ display: 'inline-flex', alignItems: 'center', gap: 6, marginTop: 16, color: '#fdfcf8', fontWeight: 600, fontSize: 14, borderBottom: '1px solid rgba(253,252,248,0.2)', paddingBottom: 2 }}>
               Already have an account? Sign in <ArrowUpRight size={14} />
             </Link>
           </div>
+        </div>
+      </section>
+
+      <section style={{ maxWidth: 1200, margin: '0 auto', padding: '24px 40px 40px', display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16 }}>
+        <div style={{ border: '1px solid var(--line)', borderRadius: 12, padding: 20, background: '#fff' }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 8, fontWeight: 700, marginBottom: 8 }}><HardDrive size={16} /> Portable ZIP — how to update</div>
+          <div style={{ fontSize: 13, lineHeight: 1.6, color: 'var(--stone)' }}>Download the new ZIP and extract over the old folder, or keep versioned folders (<code style={{ background: 'var(--paper-2)', padding: '1px 6px', borderRadius: 4 }}>Invoix-v1.0.0</code>). Your data lives in <code style={{ background: 'var(--paper-2)', padding: '1px 6px', borderRadius: 4 }}>%AppData%\invoix-app\</code> so it survives re-extracts.</div>
+        </div>
+        <div style={{ border: '1px solid var(--line)', borderRadius: 12, padding: 20, background: '#fff' }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 8, fontWeight: 700, marginBottom: 8 }}><ShieldCheck size={16} /> Is it safe? <span style={{ fontWeight: 400, color: 'var(--stone)', fontSize: 12 }}>(submitted to Microsoft)</span></div>
+          <div style={{ fontSize: 13, lineHeight: 1.6, color: 'var(--stone)' }}>We submit every release to Microsoft Defender analysis for review. The warning fades as more users run it. ZIP is preferred exactly because it avoids the installer reputation gate.</div>
         </div>
       </section>
 
