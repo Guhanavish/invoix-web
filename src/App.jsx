@@ -15,6 +15,7 @@ import Customers from './pages/Customers';
 import Products from './pages/Products';
 import Ledger from './pages/Ledger';
 import Reports from './pages/Reports';
+import Profile from './pages/Profile';
 
 function RequireAuth({ children }) {
   const location = useLocation();
@@ -46,6 +47,7 @@ export default function App() {
         <Route path="products" element={<Products />} />
         <Route path="ledger" element={<Ledger />} />
         <Route path="reports" element={<Reports />} />
+        <Route path="profile" element={<Profile />} />
       </Route>
       <Route path="*" element={<Navigate to="/" replace />} />
     </Routes>

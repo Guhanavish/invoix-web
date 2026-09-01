@@ -33,6 +33,9 @@ export const api = {
     if (!res.ok) {
       const err = new Error((body && body.error) || `Request failed (${res.status})`);
       err.status = res.status;
+      if (body && body.code) err.code = body.code;
+      if (body && body.email) err.email = body.email;
+      if (body && body.userId) err.userId = body.userId;
       throw err;
     }
     return body;
@@ -62,6 +65,30 @@ export const api = {
   },
   async resetPassword(userId, email, otp, newPassword) {
     return this.post('/auth/reset', { userId, email, otp, newPassword });
+  },
+  async requestEmailVerification(userId) {
+    return this.post('/auth/verify-email/request', { userId });
+  },
+  async confirmEmailVerification(userId, code) {
+    return this.post('/auth/verify-email/confirm', { userId, code });
+  },
+  async getProfile() {
+    return this.get('/auth/me');
+  },
+  async requestProfileChange(changes) {
+    return this.post('/auth/profile/request', changes);
+  },
+  async getProfileApprovals() {
+    return this.get('/auth/profile/approvals');
+  },
+  async getApprovals() {
+    return this.get('/approvals');
+  },
+  async approveApproval(id) {
+    return this.post(`/approvals/${id}/approve`, {});
+  },
+  async rejectApproval(id) {
+    return this.post(`/approvals/${id}/reject`, {});
   },
   async createPendingInvoice(data) {
     return this.post('/pending', data);

@@ -2,7 +2,7 @@ import React from 'react';
 import { NavLink, Outlet, useNavigate } from 'react-router-dom';
 import {
   LayoutDashboard, FileText, Users, Package, BookOpen, BarChart3,
-  Download, LogOut, Receipt, Inbox, FilePlus2,
+  Download, LogOut, Receipt, Inbox, FilePlus2, User,
 } from 'lucide-react';
 import { api, fmtDateTime } from '../api';
 import { useSyncStatus, forceSyncCheck } from '../useAutoSync';
@@ -16,6 +16,7 @@ const NAV = [
   { to: '/app/products', label: 'Products', icon: Package },
   { to: '/app/ledger', label: 'Ledger', icon: BookOpen },
   { to: '/app/reports', label: 'Reports', icon: BarChart3 },
+  { to: '/app/profile', label: 'Profile', icon: User },
 ];
 
 export default function Layout() {

@@ -26,6 +26,7 @@ function createApp() {
   app.use('/api/sync', require('./routes/sync'));
   app.use('/api/data', require('./routes/data'));
   app.use('/api/pending', require('./routes/pending'));
+  app.use('/api/approvals', require('./routes/approvals'));
   app.use('/api/download', require('./routes/download'));
   app.use('/api/config', require('./routes/config'));
 
