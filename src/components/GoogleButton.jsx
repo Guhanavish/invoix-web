@@ -18,10 +18,12 @@ function loadGsiScript() {
   return gsiScriptPromise;
 }
 
-export default function GoogleButton({ onSuccess, onError, label = 'Continue with Google' }) {
+export default function GoogleButton({ onSuccess, onError, onBusyChange, label = 'Continue with Google' }) {
   const btnRef = useRef(null);
   const [clientId, setClientId] = useState(null);
   const [failed, setFailed] = useState(false);
+  const [errorDetail, setErrorDetail] = useState('');
+  const [busy, setBusy] = useState(false);
 
   useEffect(() => {
     let active = true;
@@ -40,6 +42,7 @@ export default function GoogleButton({ onSuccess, onError, label = 'Continue wit
     if (!clientId || !btnRef.current) return;
     let active = true;
     setFailed(false);
+    setErrorDetail('');
     loadGsiScript()
       .then(async () => {
         if (!active || !window.google?.accounts?.id) return;
@@ -49,12 +52,19 @@ export default function GoogleButton({ onSuccess, onError, label = 'Continue wit
           window.google.accounts.id.initialize({
             client_id: clientId,
             callback: async (response) => {
+              setBusy(true);
+              onBusyChange && onBusyChange(true);
               try {
                 const res = await api.googleLogin(response.credential);
                 onSuccess && onSuccess(res);
               } catch (err) {
+                const msg = err && err.message ? err.message : 'Google sign-in failed';
                 setFailed(true);
+                setErrorDetail(msg);
                 onError && onError(err);
+              } finally {
+                setBusy(false);
+                onBusyChange && onBusyChange(false);
               }
             },
             auto_select: false,
@@ -68,9 +78,13 @@ export default function GoogleButton({ onSuccess, onError, label = 'Continue wit
           });
         } catch (e) {
           setFailed(true);
+          setErrorDetail(e && e.message ? e.message : 'Could not initialize Google sign-in. If this is a new deployment, make sure https://invoixweb.vercel.app is listed as an Authorized JavaScript origin in Google Cloud Console.');
         }
       })
-      .catch(() => setFailed(true));
+      .catch((e) => {
+        setFailed(true);
+        setErrorDetail(e && e.message ? e.message : 'Could not load https://accounts.google.com/gsi/client — check network or adblocker.');
+      });
     return () => { active = false; };
   }, [clientId, onSuccess, onError]);
 
@@ -88,10 +102,13 @@ export default function GoogleButton({ onSuccess, onError, label = 'Continue wit
 
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: 8, width: '100%' }}>
-      <div ref={btnRef} style={{ width: '100%', minHeight: 44 }} />
+      <div ref={btnRef} style={{ width: '100%', minHeight: 44, opacity: busy ? 0.6 : 1, pointerEvents: busy ? 'none' : 'auto' }} />
+      {busy && <div style={{ textAlign: 'center', fontSize: 12, color: 'var(--muted)' }}>Signing in with Google…</div>}
       {failed && (
         <div className="err-box" style={{ marginBottom: 0 }}>
-          Couldn’t load Google sign-in. Use your user id and password below.
+          <div>Couldn’t complete Google sign-in.</div>
+          {errorDetail && <div style={{ marginTop: 6, fontSize: 12, opacity: 0.9 }}>{errorDetail}</div>}
+          <div style={{ marginTop: 6, fontSize: 11, color: 'var(--muted)' }}>If you are the owner and just configured Google, ensure <code>https://invoixweb.vercel.app</code> is an <b>Authorized JavaScript origin</b> in Google Cloud Console &gt; APIs & Credentials &gt; OAuth 2.0 Client. A new Google account without a profile will be auto-created.</div>
         </div>
       )}
       <div style={{ textAlign: 'center', color: 'var(--muted)', fontSize: 12 }}>

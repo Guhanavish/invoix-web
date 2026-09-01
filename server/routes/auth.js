@@ -102,6 +102,8 @@ router.post('/reset', asyncHandler(async (req, res) => {
 // Google login / sign-in — works for BOTH the website and the desktop app.
 // The client sends a Google ID token; the server verifies it and resolves to a
 // single stable account (keyed by Google's `sub`), so web + app share one sync identity.
+// If the Google account has no existing profile, a new password-less account is
+// auto-provisioned so "Sign in with Google" always succeeds for any Google user.
 router.post('/google', asyncHandler(async (req, res) => {
   const { id_token } = req.body || {};
   if (!id_token) {
@@ -112,31 +114,59 @@ router.post('/google', asyncHandler(async (req, res) => {
   try {
     profile = await verifyGoogleIdToken(id_token);
   } catch (e) {
-    return res.status(401).json({ success: false, error: 'Invalid Google token: ' + e.message });
+    console.error('[auth/google] token verification failed:', e.message);
+    const hint = !process.env.GOOGLE_CLIENT_ID
+      ? ' Server is missing GOOGLE_CLIENT_ID env var.'
+      : /audience|origin|authorized/i.test(e.message)
+        ? ' This usually means https://invoixweb.vercel.app is not added as an Authorized JavaScript origin in Google Cloud Console for this OAuth client ID.'
+        : '';
+    return res.status(401).json({ success: false, error: 'Google sign-in failed: ' + e.message + hint });
+  }
+
+  if (!profile || !profile.sub) {
+    return res.status(401).json({ success: false, error: 'Google sign-in failed: missing subject in token' });
   }
 
   const uid = googleUserId(profile.sub);
+  const normalizedEmail = profile.email ? String(profile.email).trim().toLowerCase() : null;
 
   let user;
   try {
     user = await findUser(uid);
     if (!user) {
-      // Auto-provision a password-less Google account
+      // Auto-provision a password-less Google account for first-time Google users.
+      // This is the requested behaviour: any Google account without a profile gets a new account.
       const store = await loadUsers();
-      store.users[uid] = {
-        google: true,
-        email: profile.email || null,
-        name: profile.name || null,
-        picture: profile.picture || null,
-        createdAt: new Date().toISOString(),
-      };
-      await saveUsers(store);
+      // Re-check after loading to avoid race with concurrent provisioning
+      if (!store.users[uid]) {
+        store.users[uid] = {
+          google: true,
+          email: normalizedEmail,
+          name: profile.name ? String(profile.name).trim() : null,
+          picture: profile.picture || null,
+          createdAt: new Date().toISOString(),
+        };
+        await saveUsers(store);
+      }
       user = store.users[uid];
-    } else if (profile.email && user.email !== profile.email) {
-      // Keep profile info fresh
-      const store = await loadUsers();
-      store.users[uid] = { ...store.users[uid], email: profile.email, name: profile.name || store.users[uid].name, picture: profile.picture || store.users[uid].picture };
-      await saveUsers(store);
+    } else {
+      // Keep profile info fresh (email/name/picture) if Google profile changed
+      const needsUpdate =
+        (normalizedEmail && user.email !== normalizedEmail) ||
+        (profile.name && user.name !== profile.name) ||
+        (profile.picture && user.picture !== profile.picture);
+      if (needsUpdate) {
+        const store = await loadUsers();
+        const existing = store.users[uid] || user;
+        store.users[uid] = {
+          ...existing,
+          email: normalizedEmail || existing.email || null,
+          name: profile.name ? String(profile.name).trim() : existing.name || null,
+          picture: profile.picture || existing.picture || null,
+        };
+        await saveUsers(store);
+        user = store.users[uid];
+      }
     }
   } catch (e) {
     console.error('[auth/google] storage error:', e);
@@ -154,7 +184,7 @@ router.post('/google', asyncHandler(async (req, res) => {
     token: issueToken(uid),
     user: {
       userId: uid,
-      email: profile.email || user.email || null,
+      email: normalizedEmail || user.email || null,
       name: profile.name || user.name || null,
       picture: profile.picture || user.picture || null,
       createdAt: user.createdAt,

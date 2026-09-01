@@ -14,12 +14,15 @@ export default function Login() {
   const [googleBusy, setGoogleBusy] = useState(false);
 
   const onGoogleSuccess = () => {
+    setError('');
+    setGoogleBusy(false);
     const from = location.state?.from?.pathname?.startsWith('/app') ? location.state.from.pathname : '/app';
     navigate(from, { replace: true });
   };
   const onGoogleError = (err) => {
     setGoogleBusy(false);
-    setError(err.message || 'Google sign-in failed');
+    const msg = err && err.message ? err.message : 'Google sign-in failed';
+    setError(msg);
   };
 
   const submit = async (e) => {
@@ -83,8 +86,10 @@ export default function Login() {
             <GoogleButton
               onSuccess={onGoogleSuccess}
               onError={onGoogleError}
+              onBusyChange={setGoogleBusy}
               label="Sign in with the same Google account you use in the desktop app"
             />
+            {googleBusy && <div style={{ textAlign: 'center', fontSize: 12, color: 'var(--muted)', marginTop: 6 }}>Contacting Google…</div>}
             <div className="divider"><span>or use your user id</span></div>
             <div className="field">
               <label htmlFor="userId">User ID</label>
