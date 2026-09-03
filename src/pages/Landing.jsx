@@ -4,6 +4,7 @@ import {
   ArrowRight, CheckCircle2, Download, Receipt, ShieldCheck, BarChart3,
   BookOpen, FileText, MonitorDown, RefreshCw, Sparkles, Lock, ArrowUpRight, Quote,
   Package, FolderOpen, AlertCircle, HardDrive, Info, ExternalLink,
+  Github, Linkedin, Instagram,
 } from 'lucide-react';
 import { api, fmtBytes } from '../api';
 
@@ -105,6 +106,20 @@ export default function Landing() {
               <div className="hero-stat">
                 <div className="num">GST</div>
                 <div className="lbl">Compliant</div>
+              </div>
+            </div>
+            <div style={{ marginTop: 20 }}>
+              <div style={{ fontWeight: 700, fontSize: 18, fontFamily: 'var(--font-display)', color: '#fdfcf8' }}>Built By Guhanavish</div>
+              <div style={{ display: 'flex', gap: 12, marginTop: 10 }}>
+                <a href="https://github.com/Guhanavish" target="_blank" rel="noopener noreferrer" title="GitHub" aria-label="GitHub" style={{ width: 36, height: 36, borderRadius: 999, background: 'rgba(253,252,248,0.08)', border: '1px solid rgba(253,252,248,0.15)', display: 'grid', placeItems: 'center', color: '#fdfcf8' }}>
+                  <Github size={18} />
+                </a>
+                <a href="https://www.linkedin.com/in/guhanavish-ss-12a328256" target="_blank" rel="noopener noreferrer" title="LinkedIn" aria-label="LinkedIn" style={{ width: 36, height: 36, borderRadius: 999, background: 'rgba(253,252,248,0.08)', border: '1px solid rgba(253,252,248,0.15)', display: 'grid', placeItems: 'center', color: '#fdfcf8' }}>
+                  <Linkedin size={18} />
+                </a>
+                <a href="https://www.instagram.com/guha._.1416/?__pwa=1" target="_blank" rel="noopener noreferrer" title="Instagram" aria-label="Instagram" style={{ width: 36, height: 36, borderRadius: 999, background: 'rgba(253,252,248,0.08)', border: '1px solid rgba(253,252,248,0.15)', display: 'grid', placeItems: 'center', color: '#fdfcf8' }}>
+                  <Instagram size={18} />
+                </a>
               </div>
             </div>
           </div>
