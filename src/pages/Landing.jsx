@@ -50,6 +50,7 @@ export default function Landing() {
           </div>
         </div>
         <div className="land-links">
+          <a href="#profile">Profile</a>
           <a href="#features">Features</a>
           <a href="#how">How it works</a>
           <a href="#download">Download</a>
@@ -108,16 +109,17 @@ export default function Landing() {
                 <div className="lbl">Compliant</div>
               </div>
             </div>
-            <div style={{ marginTop: 20 }}>
-              <div style={{ fontWeight: 700, fontSize: 18, fontFamily: 'var(--font-display)', color: '#fdfcf8' }}>Built By Guhanavish</div>
-              <div style={{ display: 'flex', gap: 12, marginTop: 10 }}>
-                <a href="https://github.com/Guhanavish" target="_blank" rel="noopener noreferrer" title="GitHub" aria-label="GitHub" style={{ width: 36, height: 36, borderRadius: 999, background: 'rgba(253,252,248,0.08)', border: '1px solid rgba(253,252,248,0.15)', display: 'grid', placeItems: 'center', color: '#fdfcf8' }}>
+            <div style={{ marginTop: 20, padding: '14px 16px', background: '#fff', border: '1px solid var(--line)', borderRadius: 12, display: 'inline-flex', flexDirection: 'column', gap: 8, boxShadow: 'var(--shadow-soft)' }}>
+              <div style={{ fontWeight: 800, fontSize: 18, fontFamily: 'var(--font-display)', color: 'var(--ink)', letterSpacing: '-0.02em' }}>Built By <span style={{ color: 'var(--oxide)' }}>Guhanavish</span></div>
+              <div style={{ fontSize: 12, color: 'var(--stone)', fontFamily: 'var(--font-mono)', letterSpacing: '0.06em' }}>Developer · Designer · Invoix Atelier</div>
+              <div style={{ display: 'flex', gap: 10, marginTop: 6 }}>
+                <a href="https://github.com/Guhanavish" target="_blank" rel="noopener noreferrer" title="GitHub" aria-label="GitHub" style={{ width: 36, height: 36, borderRadius: 999, background: 'var(--ink)', border: '1px solid var(--ink)', display: 'grid', placeItems: 'center', color: '#fff' }}>
                   <Github size={18} />
                 </a>
-                <a href="https://www.linkedin.com/in/guhanavish-ss-12a328256" target="_blank" rel="noopener noreferrer" title="LinkedIn" aria-label="LinkedIn" style={{ width: 36, height: 36, borderRadius: 999, background: 'rgba(253,252,248,0.08)', border: '1px solid rgba(253,252,248,0.15)', display: 'grid', placeItems: 'center', color: '#fdfcf8' }}>
+                <a href="https://www.linkedin.com/in/guhanavish-ss-12a328256" target="_blank" rel="noopener noreferrer" title="LinkedIn" aria-label="LinkedIn" style={{ width: 36, height: 36, borderRadius: 999, background: '#0a66c2', border: '1px solid #0a66c2', display: 'grid', placeItems: 'center', color: '#fff' }}>
                   <Linkedin size={18} />
                 </a>
-                <a href="https://www.instagram.com/guha._.1416/?__pwa=1" target="_blank" rel="noopener noreferrer" title="Instagram" aria-label="Instagram" style={{ width: 36, height: 36, borderRadius: 999, background: 'rgba(253,252,248,0.08)', border: '1px solid rgba(253,252,248,0.15)', display: 'grid', placeItems: 'center', color: '#fdfcf8' }}>
+                <a href="https://www.instagram.com/guha._.1416/?__pwa=1" target="_blank" rel="noopener noreferrer" title="Instagram" aria-label="Instagram" style={{ width: 36, height: 36, borderRadius: 999, background: 'linear-gradient(135deg,#feda75,#fa7e1e,#d62976,#962fbf,#4f5bd5)', border: '1px solid #e5e7eb', display: 'grid', placeItems: 'center', color: '#fff' }}>
                   <Instagram size={18} />
                 </a>
               </div>
@@ -146,6 +148,36 @@ export default function Landing() {
               <span className="ico" style={{ color: 'var(--oxide)' }}><BarChart3 size={16} /></span>
               <div><div>GSTR-1 ready</div><small>B2B · 12 invoices</small></div>
             </div>
+          </div>
+        </div>
+      </section>
+
+      <section style={{ maxWidth: 1200, margin: '0 auto', padding: '40px', scrollMarginTop: 80 }} id="profile">
+        <div style={{ border: '1px solid var(--line)', borderRadius: 16, background: '#fff', padding: 28, display: 'grid', gridTemplateColumns: '96px 1fr auto', gap: 20, alignItems: 'center', boxShadow: 'var(--shadow-card)' }}>
+          <div style={{ width: 96, height: 96, borderRadius: 16, background: 'linear-gradient(135deg,#0f172a,#334155)', display: 'grid', placeItems: 'center', color: '#fff', fontFamily: 'var(--font-display)', fontWeight: 800, fontSize: 32, letterSpacing: '-0.03em' }}>G</div>
+          <div>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 10, flexWrap: 'wrap' }}>
+              <span style={{ fontFamily: 'var(--font-display)', fontWeight: 800, fontSize: 22, color: 'var(--ink)' }}>Guhanavish</span>
+              <span style={{ fontFamily: 'var(--font-mono)', fontSize: 11, letterSpacing: '0.1em', textTransform: 'uppercase', background: 'var(--paper-2)', border: '1px solid var(--line)', padding: '4px 8px', borderRadius: 999, color: 'var(--stone)' }}>Built By</span>
+              <span style={{ fontFamily: 'var(--font-mono)', fontSize: 11, letterSpacing: '0.1em', textTransform: 'uppercase', background: '#fef3c7', border: '1px solid #fde68a', padding: '4px 8px', borderRadius: 999, color: '#92400e' }}>Invoix Atelier</span>
+            </div>
+            <div style={{ marginTop: 8, fontSize: 14, lineHeight: 1.6, color: 'var(--stone)' }}>
+              Builder of Invoix — heritage-grade GST billing for Windows + live web mirror. Crafting offline-first ledger, typeset invoices, and GSTR-ready workflows. Open to collaborations.
+            </div>
+            <div style={{ marginTop: 10, display: 'flex', gap: 8, flexWrap: 'wrap', fontFamily: 'var(--font-mono)', fontSize: 11, color: 'var(--stone-light)' }}>
+              <span>Ledger · Billing · GST</span><span>·</span><span>Electron · React · SQLite</span><span>·</span><span>Surat · India</span>
+            </div>
+          </div>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 10, alignItems: 'stretch', minWidth: 220 }}>
+            <a href="https://github.com/Guhanavish" target="_blank" rel="noopener noreferrer" style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '10px 14px', borderRadius: 10, background: 'var(--ink)', color: '#fff', textDecoration: 'none', fontWeight: 600, fontSize: 13 }}>
+              <Github size={16} /> GitHub · Guhanavish <ExternalLink size={12} style={{ marginLeft: 'auto', opacity: 0.7 }} />
+            </a>
+            <a href="https://www.linkedin.com/in/guhanavish-ss-12a328256" target="_blank" rel="noopener noreferrer" style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '10px 14px', borderRadius: 10, background: '#0a66c2', color: '#fff', textDecoration: 'none', fontWeight: 600, fontSize: 13 }}>
+              <Linkedin size={16} /> LinkedIn · Guhanavish <ExternalLink size={12} style={{ marginLeft: 'auto', opacity: 0.7 }} />
+            </a>
+            <a href="https://www.instagram.com/guha._.1416/?__pwa=1" target="_blank" rel="noopener noreferrer" style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '10px 14px', borderRadius: 10, background: 'linear-gradient(135deg,#feda75,#fa7e1e,#d62976,#962fbf,#4f5bd5)', color: '#fff', textDecoration: 'none', fontWeight: 600, fontSize: 13 }}>
+              <Instagram size={16} /> Instagram · guha._.1416 <ExternalLink size={12} style={{ marginLeft: 'auto', opacity: 0.7 }} />
+            </a>
           </div>
         </div>
       </section>
