@@ -28,6 +28,7 @@ function createApp() {
   app.use('/api/pending', require('./routes/pending'));
   app.use('/api/approvals', require('./routes/approvals'));
   app.use('/api/download', require('./routes/download'));
+  app.use('/api/version', require('./routes/version'));
   app.use('/api/config', require('./routes/config'));
 
   if (fs.existsSync(WEB_DIR)) {

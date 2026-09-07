@@ -1,0 +1,16 @@
+{
+  "version": "1.0.1",
+  "notes": "Auto-update in place, fixed dark mode, email notifications",
+  "mandatory": false,
+  "publishedAt": "2026-09-07T13:23:39.992Z",
+  "zip": {
+    "name": "Invoix-v1.0.1.zip",
+    "size": 141114762,
+    "url": "/api/download/installer/Invoix-v1.0.1.zip"
+  },
+  "exe": {
+    "name": "Invoix Setup 1.0.1.exe",
+    "size": 91638387,
+    "url": "/api/download/installer/Invoix%20Setup%201.0.1.exe"
+  }
+}

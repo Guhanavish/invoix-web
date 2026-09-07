@@ -8,12 +8,13 @@ import {
 } from 'lucide-react';
 import { api, fmtBytes } from '../api';
 
-const ZIP_NAME = 'Invoix-v1.0.0.zip';
-const EXE_NAME = 'Invoix Setup 1.0.0.exe';
+const ZIP_NAME = 'Invoix-v1.0.1.zip';
+const EXE_NAME = 'Invoix Setup 1.0.1.exe';
 
 export default function Landing() {
   const [zipFile, setZipFile] = useState(null);
   const [exeFile, setExeFile] = useState(null);
+  const [appVersion, setAppVersion] = useState(null);
   const [scrolled, setScrolled] = useState(false);
   const [showHelp, setShowHelp] = useState(false);
 
@@ -24,16 +25,22 @@ export default function Landing() {
   }, []);
 
   useEffect(() => {
-    api.get('/download/installer/info')
+    // Single source of truth: /api/version (falls back to installer list)
+    api.get('/version')
       .then((res) => {
-        const zip = res.files.find((f) => f.name.toLowerCase().endsWith('.zip')) || res.files.find((f) => !f.isExe);
-        const exe = res.files.find((f) => f.isExe);
-        if (zip) setZipFile(zip);
-        if (exe) setExeFile(exe);
-        // fallback if API uses different naming
-        if (!zip && res.files[0]) setZipFile(res.files.find((f) => f.name === ZIP_NAME) || res.files[0]);
+        if (res.version) setAppVersion(res.version);
+        if (res.files?.zip) setZipFile(res.files.zip);
+        if (res.files?.exe) setExeFile(res.files.exe);
       })
-      .catch(() => {});
+      .catch(() => {})
+      .finally(() => {
+        api.get('/download/installer/info')
+          .then((res) => {
+            setZipFile((prev) => prev || res.files.find((f) => f.name.toLowerCase().endsWith('.zip')) || res.files.find((f) => !f.isExe) || null);
+            setExeFile((prev) => prev || res.files.find((f) => f.isExe) || null);
+          })
+          .catch(() => {});
+      });
   }, []);
 
   const zipUrl = zipFile ? `/api/download/installer/${encodeURIComponent(zipFile.name)}` : `/api/download/installer/${ZIP_NAME}`;
@@ -262,7 +269,7 @@ export default function Landing() {
               ledger, PDFs and live web sync. Portable ZIP is recommended to avoid the Windows “Unknown publisher” warning.
             </p>
             <div className="dl-meta">
-              <div className="m">Version<b>v1.0.0</b></div>
+              <div className="m">Version<b>v{appVersion || '1.0.1'}</b></div>
               <div className="m">Platform<b>Windows x64</b></div>
               <div className="m">Primary<b>ZIP portable</b></div>
               <div className="m">Also<b>EXE installer</b></div>
@@ -339,7 +346,7 @@ export default function Landing() {
       <section style={{ maxWidth: 1200, margin: '0 auto', padding: '24px 40px 40px', display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16 }}>
         <div style={{ border: '1px solid var(--line)', borderRadius: 12, padding: 20, background: '#fff' }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: 8, fontWeight: 700, marginBottom: 8 }}><HardDrive size={16} /> Portable ZIP — how to update</div>
-          <div style={{ fontSize: 13, lineHeight: 1.6, color: 'var(--stone)' }}>Download the new ZIP and extract over the old folder, or keep versioned folders (<code style={{ background: 'var(--paper-2)', padding: '1px 6px', borderRadius: 4 }}>Invoix-v1.0.0</code>). Your data lives in <code style={{ background: 'var(--paper-2)', padding: '1px 6px', borderRadius: 4 }}>%AppData%\invoix-app\</code> so it survives re-extracts.</div>
+          <div style={{ fontSize: 13, lineHeight: 1.6, color: 'var(--stone)' }}>The app now updates itself in place (<b>Settings → App Updates</b>) — no manual re-download needed. Prefer manual? Download the new ZIP and extract over the old folder. Your data lives in <code style={{ background: 'var(--paper-2)', padding: '1px 6px', borderRadius: 4 }}>%AppData%\invoix-app\</code> so it survives re-extracts.</div>
         </div>
         <div style={{ border: '1px solid var(--line)', borderRadius: 12, padding: 20, background: '#fff' }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: 8, fontWeight: 700, marginBottom: 8 }}><ShieldCheck size={16} /> Is it safe? <span style={{ fontWeight: 400, color: 'var(--stone)', fontSize: 12 }}>(submitted to Microsoft)</span></div>
