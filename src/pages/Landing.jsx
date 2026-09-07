@@ -8,8 +8,8 @@ import {
 } from 'lucide-react';
 import { api, fmtBytes } from '../api';
 
-const ZIP_NAME = 'Invoix-v1.0.1.zip';
-const EXE_NAME = 'Invoix Setup 1.0.1.exe';
+const ZIP_NAME = 'Invoix-v1.0.2.zip';
+const EXE_NAME = 'Invoix Setup 1.0.2.exe';
 
 export default function Landing() {
   const [zipFile, setZipFile] = useState(null);
@@ -269,7 +269,7 @@ export default function Landing() {
               ledger, PDFs and live web sync. Portable ZIP is recommended to avoid the Windows “Unknown publisher” warning.
             </p>
             <div className="dl-meta">
-              <div className="m">Version<b>v{appVersion || '1.0.1'}</b></div>
+              <div className="m">Version<b>v{appVersion || '1.0.2'}</b></div>
               <div className="m">Platform<b>Windows x64</b></div>
               <div className="m">Primary<b>ZIP portable</b></div>
               <div className="m">Also<b>EXE installer</b></div>
