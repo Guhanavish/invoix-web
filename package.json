@@ -9,6 +9,7 @@
   },
   "dependencies": {
     "@vercel/blob": "^2.7.0",
+    "backblaze-b2": "^1.7.1",
     "dotenv": "^17.4.2",
     "express": "^4.19.2",
     "google-auth-library": "^9.15.1",

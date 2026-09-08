@@ -7,8 +7,8 @@ const path = require('path');
 require('dotenv').config({ path: path.join(__dirname, '..', 'server', '.env.local') });
 require('dotenv').config();
 
-const TOKEN = process.env.BLOB_READ_WRITE_TOKEN;
-if (!TOKEN) { console.error('Missing BLOB_READ_WRITE_TOKEN'); process.exit(1); }
+const { b2Enabled } = require('../server/lib/b2');
+if (!b2Enabled() && !process.env.BLOB_READ_WRITE_TOKEN) { console.error('No storage configured (B2 or Blob)'); process.exit(1); }
 
 function parseArgs() {
   const args = process.argv.slice(2);
@@ -21,15 +21,9 @@ function parseArgs() {
 }
 
 async function readUsers() {
-  const { get } = require('@vercel/blob');
-  const parse = async (access) => {
-    const r = await get('users.json', { token: TOKEN, access });
-    if (!r) return null;
-    const chunks = [];
-    for await (const c of r.stream) chunks.push(Buffer.from(c));
-    return JSON.parse(Buffer.concat(chunks).toString('utf8'));
-  };
-  try { return await parse('private'); } catch (e) { return await parse('public'); }
+  // Tiered storage read: B2 primary, Blob fallback (production truth either way)
+  const { readJSON } = require('../server/lib/storage');
+  return await readJSON('users.json');
 }
 
 async function main() {

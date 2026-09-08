@@ -5,7 +5,8 @@
 //   2. Updates desktop + web package.json + server/version.json
 //   3. REFUSES to continue unless BOTH versioned artifacts exist in server/downloads
 //      (this is what guarantees "zip updated without fail" on every exe update)
-//   4. Uploads EXE + ZIP + version.json to Vercel Blob
+//   4. Uploads EXE + ZIP + version.json to Backblaze B2 (both buckets, sharded)
+//      with an awaited Vercel Blob mirror (capped at 800MB)
 //   5. Emails every verified user about the update (unless --skip-email)
 //
 // Usage:
@@ -18,11 +19,12 @@ const path = require('path');
 require('dotenv').config({ path: path.join(__dirname, '..', 'server', '.env.local') });
 require('dotenv').config();
 
-const TOKEN = process.env.BLOB_READ_WRITE_TOKEN;
-if (!TOKEN) {
-  console.error('Missing BLOB_READ_WRITE_TOKEN. Get it from Vercel -> Storage -> Blob store -> Settings.');
+const { b2Enabled, b2Write, bucketFor } = require('../server/lib/b2');
+if (!b2Enabled()) {
+  console.error('Backblaze B2 is not configured. Set B2_KEY_ID_1/B2_APP_KEY_1/B2_BUCKET_1 (+ _2).');
   process.exit(1);
 }
+const TOKEN = process.env.BLOB_READ_WRITE_TOKEN; // Blob mirror only (optional, capped)
 
 const ROOT = path.join(__dirname, '..');
 const DESKTOP_PKG = 'G:\\Business Software Development\\Business Software Development\\package.json';
@@ -58,45 +60,48 @@ function setPkgVersion(file, version) {
   fs.writeFileSync(file, JSON.stringify(pkg, null, 2) + '\n');
 }
 
-async function putFile(name, buffer, contentType) {
-  const { put } = require('@vercel/blob');
+async function mirrorBlob(key, buffer, contentType) {
+  if (!TOKEN) return;
   try {
-    return await put('downloads/' + name, buffer, { token: TOKEN, access: 'public', contentType, addRandomSuffix: false, allowOverwrite: true });
-  } catch (e) {
-    if (e.name === 'BlobAccessError' || /access/i.test(e.message || '')) {
-      return await put('downloads/' + name, buffer, { token: TOKEN, access: 'private', contentType, addRandomSuffix: false, allowOverwrite: true });
+    const { blobUsageBytes, BLOB_CAP_BYTES, accessMode, withFlip } = require('../server/lib/storage');
+    const used = await blobUsageBytes().catch(() => 0);
+    if (used + buffer.length > BLOB_CAP_BYTES) {
+      console.log(`  Blob mirror skipped for "${key}" (cap 800MB)`);
+      return;
     }
-    throw e;
+    const { put } = require('@vercel/blob');
+    const res = await withFlip(await accessMode(), (access) =>
+      put(key, buffer, { token: TOKEN, access, contentType, addRandomSuffix: false, allowOverwrite: true })
+    );
+    console.log(`  Blob mirror -> ${res.url}`);
+  } catch (e) {
+    console.log(`  Blob mirror failed for "${key}": ${e.message}`);
   }
+}
+
+async function putFile(name, buffer, contentType) {
+  const key = 'downloads/' + name;
+  const out = await b2Write(key, buffer, contentType);
+  console.log(`  B2 -> bucket "${out.bucket}"`);
+  await mirrorBlob(key, buffer, contentType);
+  return out;
 }
 
 async function putVersion(payload) {
-  const { put } = require('@vercel/blob');
   const buf = Buffer.from(JSON.stringify(payload, null, 2), 'utf8');
-  try {
-    return await put('version.json', buf, { token: TOKEN, access: 'public', contentType: 'application/json', addRandomSuffix: false, allowOverwrite: true });
-  } catch (e) {
-    if (e.name === 'BlobAccessError' || /access/i.test(e.message || '')) {
-      return await put('version.json', buf, { token: TOKEN, access: 'private', contentType: 'application/json', addRandomSuffix: false, allowOverwrite: true });
-    }
-    throw e;
-  }
+  const out = await b2Write('version.json', buf, 'application/json');
+  console.log(`  B2 version.json -> bucket "${out.bucket}"`);
+  await mirrorBlob('version.json', buf, 'application/json');
+  return out;
 }
 
 async function loadAllUsers() {
-  // Read users.json straight from Blob (production truth)
-  const { get } = require('@vercel/blob');
-  const tryAccess = async (access) => {
-    const r = await get('users.json', { token: TOKEN, access });
-    if (!r) return null;
-    const chunks = [];
-    for await (const c of r.stream) chunks.push(Buffer.from(c));
-    return JSON.parse(Buffer.concat(chunks).toString('utf8'));
-  };
+  // Read users.json via tiered storage (B2 primary, Blob fallback)
   try {
-    try { return await tryAccess('private'); } catch (e) { return await tryAccess('public'); }
+    const { readJSON } = require('../server/lib/storage');
+    return await readJSON('users.json');
   } catch (e) {
-    console.log('Could not read users.json from Blob:', e.message);
+    console.log('Could not read users.json:', e.message);
     return null;
   }
 }
@@ -199,18 +204,18 @@ async function main() {
   fs.writeFileSync(path.join(ROOT, 'server', 'version.json'), JSON.stringify(versionPayload, null, 2));
   console.log('Version files updated.');
 
-  // 2. Upload artifacts + version manifest
+  // 2. Upload artifacts + version manifest (B2 both buckets + Blob mirror)
   if (!opts.skipUpload) {
     for (const [name, full, type] of [[zipName, zipPath, 'application/zip'], [exeName, exePath, 'application/octet-stream']]) {
       const buf = fs.readFileSync(full);
-      console.log(`Uploading ${name} (${(buf.length / 1048576).toFixed(1)} MB)...`);
-      const res = await putFile(name, buf, type);
-      console.log(`Uploaded ${name} -> ${res.url}`);
+      console.log(`Uploading ${name} (${(buf.length / 1048576).toFixed(1)} MB) to B2 bucket #${bucketFor('downloads/' + name)}...`);
+      await putFile(name, buf, type);
+      console.log(`Uploaded ${name}`);
     }
-    const vres = await putVersion(versionPayload);
-    console.log(`Uploaded version.json -> ${vres.url}`);
+    await putVersion(versionPayload);
+    console.log('Uploaded version.json');
   } else {
-    console.log('--skip-upload: Blob upload skipped.');
+    console.log('--skip-upload: storage upload skipped.');
   }
 
   // 3. Email every verified user
