@@ -87,7 +87,8 @@ async function findFileId(c, key) {
   const res = await c.b2.listFileNames({ bucketId: c.bucketId, prefix: String(key), maxFileCount: 10 });
   const files = (res && res.data && res.data.files) || [];
   const hit = files.find((f) => f.fileName === String(key) && f.action === 'upload');
-  return hit ? { fileId: hit.fileId, size: hit.size, contentType: hit.contentType, uploadedAt: hit.uploadTimestamp } : null;
+  // list_file_names returns contentLength (list_file_versions returns size)
+  return hit ? { fileId: hit.fileId, size: hit.size ?? hit.contentLength ?? 0, contentType: hit.contentType, uploadedAt: hit.uploadTimestamp } : null;
 }
 
 async function b2Read(key) {
@@ -151,12 +152,12 @@ async function b2DownloadStream(key) {
   const hit = await findFileId(c, key);
   if (!hit) return null;
   const url = `${c.b2.downloadUrl}/file/${encodeURIComponent(getBuckets()[idx].name)}/${String(key).split('/').map(encodeURIComponent).join('/')}`;
-  const res = await fetch(url, { headers: { Authorization: c.b2.authToken } });
+  const res = await fetch(url, { headers: { Authorization: c.b2.authorizationToken } });
   if (res.status === 401) {
     // Token rotated mid-flight — re-auth once and retry
     clients.delete(idx);
     const c2 = await client(idx);
-    const res2 = await fetch(url, { headers: { Authorization: c2.b2.authToken } });
+    const res2 = await fetch(url, { headers: { Authorization: c2.b2.authorizationToken } });
     if (!res2.ok || !res2.body) return null;
     return { stream: res2.body, size: hit.size, contentType: hit.contentType || 'application/octet-stream' };
   }
@@ -181,7 +182,8 @@ async function b2List(prefix) {
           const files = (res && res.data && res.data.files) || [];
           for (const f of files) {
             if (f.action !== 'upload') continue;
-            out.push({ pathname: f.fileName, size: f.size, uploadedAt: new Date(f.uploadTimestamp), bucket: getBuckets()[idx].name });
+            // list_file_names returns contentLength (list_file_versions returns size)
+            out.push({ pathname: f.fileName, size: f.size ?? f.contentLength ?? 0, uploadedAt: new Date(f.uploadTimestamp), bucket: getBuckets()[idx].name });
           }
           if (!res.data || !res.data.nextFileName) break;
           start = res.data.nextFileName;
