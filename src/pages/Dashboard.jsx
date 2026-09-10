@@ -1,43 +1,68 @@
 import React, { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
-import { IndianRupee, FileText, Users, Package, ArrowUpRight, CloudUpload, BarChart3 } from 'lucide-react';
+import { IndianRupee, FileText, Users, Package, ArrowUpRight, CloudUpload, CloudOff, BarChart3 } from 'lucide-react';
 import { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
 import { api, fmtMoney, fmtDate, fmtDateTime, invoiceStatus } from '../api';
 import { useAutoRefresh } from '../useAutoSync';
-import { StatCard, Badge, Empty, Loading, PageHead } from '../components/ui';
+import { StatCard, Badge, Empty, Loading, Skeleton, ErrorState, OfflineBar, useOnline } from '../components/ui';
 
 export default function Dashboard() {
   const [data, setData] = useState(null);
   const [sync, setSync] = useState(null);
-  const [error, setError] = useState('');
+  const [error, setError] = useState(null);
+  const online = useOnline();
 
   const load = () => {
-    api.get('/data/dashboard').then(setData).catch((e) => setError(e.message));
+    api.get('/data/dashboard').then((d) => { setData(d); setError(null); }).catch((e) => setError(e));
     api.get('/sync/status').then(setSync).catch(() => {});
   };
 
   useEffect(() => { load(); }, []);
   useAutoRefresh(load);
 
-  if (error) {
+  // No synced database yet (404) is an onboarding state, not a failure.
+  if (error && error.status === 404) {
     return (
       <div style={{ maxWidth: 640, margin: '40px auto' }}>
         <div className="card" style={{ padding: 40, textAlign: 'center', borderStyle: 'dashed' }}>
           <div style={{ width: 56, height: 56, borderRadius: 14, background: 'var(--paper-2)', border: '1px solid var(--line)', display: 'grid', placeItems: 'center', margin: '0 auto 16px', color: 'var(--stone)' }}><CloudUpload size={22} /></div>
           <h3 style={{ fontFamily: 'var(--font-display)', fontSize: 20, marginBottom: 8 }}>Your folio is empty</h3>
           <p style={{ fontFamily: 'var(--font-editorial)', fontStyle: 'italic', color: 'var(--stone)', lineHeight: 1.6 }}>Open the Invoix desktop atelier → Settings → Web Sync, enter your user id, and press Sync. Your figures will be set here.</p>
-          <Link to="/app/invoices/new" className="btn btn-primary" style={{ marginTop: 18, borderRadius: 999 }}>Create a draft on the web</Link>
+          <Link to="/app/invoices/new" className="btn btn-primary" style={{ marginTop: 18, borderRadius: 12 }}>Create a draft on the web</Link>
         </div>
       </div>
     );
   }
-  if (!data) return <Loading />;
+  if (error) {
+    return (
+      <ErrorState
+        icon={<CloudOff size={22} />}
+        title={api.isNetworkError(error) ? "Can't reach the server" : 'Dashboard would not load'}
+        sub={error.message}
+        network={api.isNetworkError(error)}
+        onRetry={load}
+        backTo="/app"
+      />
+    );
+  }
+  if (!data) {
+    return (
+      <div>
+        <div style={{ marginBottom: 24 }}><Skeleton variant="lines" rows={2} /></div>
+        <Skeleton variant="cards" />
+        <div className="card" style={{ padding: 24, marginTop: 16 }}>
+          <Skeleton variant="lines" rows={4} />
+        </div>
+      </div>
+    );
+  }
 
   const { company, totalRevenue, totalInvoices, totalCustomers, totalProducts, totalDue, totalPending, monthlyRevenue, recentInvoices, monthlyData, dueInvoices } = data;
   const chartData = (monthlyData || []).map((m) => ({ label: m.month.slice(5) + '/' + m.month.slice(2, 4), revenue: Number(m.total) || 0 }));
 
   return (
     <div>
+      {!online && <OfflineBar />}
       <div style={{ display: 'flex', alignItems: 'baseline', gap: 16, flexWrap: 'wrap', marginBottom: 6 }}>
         <h1 style={{ fontSize: 42, letterSpacing: '-0.04em' }}>{company?.name || 'Atelier'}</h1>
         <span style={{ fontFamily: 'var(--font-editorial)', fontStyle: 'italic', color: 'var(--stone)', fontSize: 16 }}>— live folio</span>

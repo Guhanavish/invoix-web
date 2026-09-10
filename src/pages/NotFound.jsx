@@ -16,7 +16,7 @@ export default function NotFound() {
         <div style={{ fontFamily: 'var(--font-mono)', fontSize: 12, letterSpacing: '0.2em', color: 'var(--oxide)', marginBottom: 8 }}>ERROR 404</div>
         <h1 style={{ fontFamily: 'var(--font-display)', fontSize: 36, fontWeight: 700, color: 'var(--ink)', marginBottom: 12 }}>This page is not in the ledger.</h1>
         <p style={{ color: 'var(--stone)', fontSize: 15, lineHeight: 1.6, marginBottom: 24 }}>
-          The address you typed does not match any page. Check the spelling, or pick a destination below.
+          This page does not exist, or it moved. Check the spelling, or pick a destination below.
         </p>
         <nav style={{ display: 'flex', gap: 10, justifyContent: 'center', flexWrap: 'wrap' }} aria-label="Not found navigation">
           <Link className="btn btn-primary" to="/"><ArrowLeft size={15} /> Back home</Link>

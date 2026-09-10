@@ -20,10 +20,33 @@ export const api = {
     localStorage.removeItem(TOKEN_KEY);
     localStorage.removeItem(USER_KEY);
   },
+  // Called on 401s from non-auth endpoints (expired/revoked token).
+  // Default: clear the session and bounce to sign-in with a return path.
+  onUnauthorized: null,
+  handleUnauthorized() {
+    if (typeof this.onUnauthorized === 'function') {
+      this.onUnauthorized();
+      return;
+    }
+    const next = window.location.pathname + window.location.search;
+    this.clearSession();
+    window.location.href = `/login?expired=1&next=${encodeURIComponent(next)}`;
+  },
+  isNetworkError(e) {
+    return !!(e && (e.network || e.name === 'TypeError' && /fetch|network|load/i.test(e.message || '')));
+  },
   async request(path, options = {}) {
     const headers = { ...(options.headers || {}) };
     if (this.token) headers.Authorization = `Bearer ${this.token}`;
-    const res = await fetch(`/api${path}`, { ...options, headers });
+    let res;
+    try {
+      res = await fetch(`/api${path}`, { ...options, headers });
+    } catch (e) {
+      const err = new Error("Can't reach the server. Check your internet connection and try again.");
+      err.network = true;
+      err.cause = e;
+      throw err;
+    }
     let body = null;
     try {
       body = await res.json();
@@ -31,6 +54,20 @@ export const api = {
       body = null;
     }
     if (!res.ok) {
+      if (res.status === 401 && this.token && !String(path).startsWith('/auth/')) {
+        // Session died mid-app: sign in again, then come back here.
+        this.handleUnauthorized();
+        const err = new Error('Your session expired. Signing you in again…');
+        err.status = 401;
+        err.sessionExpired = true;
+        throw err;
+      }
+      if (res.status >= 500) {
+        const err = new Error((body && body.error) || 'Something went wrong on our side. Please try again in a moment.');
+        err.status = res.status;
+        err.server = true;
+        throw err;
+      }
       const err = new Error((body && body.error) || `Request failed (${res.status})`);
       err.status = res.status;
       if (body && body.code) err.code = body.code;
@@ -97,10 +134,7 @@ export const api = {
     return this.get('/pending');
   },
   async deletePendingInvoice(id) {
-    const res = await fetch(`/api/pending/${id}`, { method: 'DELETE', headers: this.token ? { Authorization: `Bearer ${this.token}` } : {} });
-    const body = await res.json().catch(() => null);
-    if (!res.ok) throw new Error((body && body.error) || `Request failed (${res.status})`);
-    return body;
+    return this.request(`/pending/${id}`, { method: 'DELETE' });
   },
 };
 

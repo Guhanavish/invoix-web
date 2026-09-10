@@ -1,14 +1,20 @@
 ﻿import React, { useState } from 'react';
-import { Link, useNavigate, useLocation } from 'react-router-dom';
-import { Receipt, LogIn, ShieldCheck, ArrowRight } from 'lucide-react';
+import { Link, useNavigate, useLocation, useSearchParams } from 'react-router-dom';
+import { Receipt, LogIn, ShieldCheck, ArrowRight, WifiOff, KeyRound } from 'lucide-react';
 import { api } from '../api';
 import GoogleButton from '../components/GoogleButton';
+import { FieldError, OfflineBar, useOnline } from '../components/ui';
+
+const USER_ID_RE = /^[a-z0-9][a-z0-9._-]{1,31}$/i;
 
 export default function Login() {
   const navigate = useNavigate();
   const location = useLocation();
+  const [params] = useSearchParams();
+  const online = useOnline();
   const [userId, setUserId] = useState('');
   const [password, setPassword] = useState('');
+  const [touched, setTouched] = useState({});
   const [error, setError] = useState('');
   const [ok, setOk] = useState('');
   const [busy, setBusy] = useState(false);
@@ -16,11 +22,27 @@ export default function Login() {
   const [needVerify, setNeedVerify] = useState(null);
   const [verifyCode, setVerifyCode] = useState('');
 
+  const expired = params.get('expired') === '1';
+  const nextParam = params.get('next');
+  const safeNext = nextParam && nextParam.startsWith('/app') ? nextParam : null;
+  const destination = () => {
+    if (safeNext) return safeNext;
+    const from = location.state?.from?.pathname?.startsWith('/app') ? location.state.from.pathname : '/app';
+    return from;
+  };
+
+  const idError = !userId.trim()
+    ? 'Enter your user id.'
+    : !USER_ID_RE.test(userId.trim())
+      ? 'User ids use letters, numbers, dots, dashes or underscores (2-32 characters).'
+      : '';
+  const pwError = !password ? 'Enter your password.' : '';
+  const formValid = !idError && !pwError;
+
   const onGoogleSuccess = () => {
     setError('');
     setGoogleBusy(false);
-    const from = location.state?.from?.pathname?.startsWith('/app') ? location.state.from.pathname : '/app';
-    navigate(from, { replace: true });
+    navigate(destination(), { replace: true });
   };
   const onGoogleError = (err) => {
     setGoogleBusy(false);
@@ -30,19 +52,20 @@ export default function Login() {
 
   const submit = async (e) => {
     e.preventDefault();
+    setTouched({ userId: true, password: true });
+    if (!formValid || !online) return;
     setError(''); setOk('');
     setBusy(true);
     try {
-      const res = await api.post('/auth/login', { userId, password });
+      const res = await api.post('/auth/login', { userId: userId.trim(), password });
       api.setSession(res.token, res.user);
-      const from = location.state?.from?.pathname?.startsWith('/app') ? location.state.from.pathname : '/app';
-      navigate(from, { replace: true });
+      navigate(destination(), { replace: true });
     } catch (err) {
       if (err.status === 403 && err.message && err.message.includes('Email not verified')) {
-        setNeedVerify({ userId, email: err.email || '' });
-        try { await api.requestEmailVerification(userId); setOk('Verification code sent to your registered email. Enter it below.'); } catch (e2) { setError(e2.message); }
+        setNeedVerify({ userId: userId.trim(), email: err.email || '' });
+        try { await api.requestEmailVerification(userId.trim()); setOk('Verification code sent to your registered email. Enter it below.'); } catch (e2) { setError(e2.message); }
       } else {
-        setError(err.message);
+        setError(err.network ? err.message : 'Those details did not match. Check the user id and password, then try again.');
       }
     } finally {
       setBusy(false);
@@ -57,8 +80,7 @@ export default function Login() {
       const res = await api.confirmEmailVerification(needVerify.userId, verifyCode);
       api.setSession(res.token, res.user);
       setOk('Email verified! Opening…');
-      const from = location.state?.from?.pathname?.startsWith('/app') ? location.state.from.pathname : '/app';
-      setTimeout(() => navigate(from, { replace: true }), 600);
+      setTimeout(() => navigate(destination(), { replace: true }), 600);
     } catch (err) {
       setError(err.message);
       setBusy(false);
@@ -104,11 +126,18 @@ export default function Login() {
           <h1>Sign <i style={{ fontFamily: 'var(--font-display)', fontStyle: 'italic', fontWeight: 300 }}>in</i></h1>
           <p>Enter your user id and password to open the folio.</p>
 
+          {expired && !needVerify && (
+            <div className="ok-box" style={{ display: 'flex', gap: 8, alignItems: 'flex-start' }}>
+              <KeyRound size={15} style={{ flexShrink: 0, marginTop: 2 }} />
+              <span>Your session expired, please sign in again{safeNext ? ' — you will return right where you left off' : ''}.</span>
+            </div>
+          )}
           {error && <div className="err-box">{error}</div>}
           {ok && <div className="ok-box">{ok}</div>}
 
           {!needVerify ? (
-            <form onSubmit={submit}>
+            <form onSubmit={submit} noValidate>
+              <OfflineBar />
               <GoogleButton
                 onSuccess={onGoogleSuccess}
                 onError={onGoogleError}
@@ -121,35 +150,40 @@ export default function Login() {
                 <label htmlFor="userId">User ID</label>
                 <input
                   id="userId"
-                  className="input"
+                  className={`input ${touched.userId && idError ? 'invalid' : ''}`}
                   placeholder="e.g. mehta-fabrics"
                   value={userId}
                   onChange={(e) => setUserId(e.target.value)}
+                  onBlur={() => setTouched((t) => ({ ...t, userId: true }))}
                   autoComplete="username"
-                  required
                   autoFocus
+                  aria-invalid={!!(touched.userId && idError)}
+                  aria-describedby="userId-hint"
                 />
+                <span id="userId-hint"><FieldError error={touched.userId ? idError : ''} hint="Letters, numbers, dots, dashes or underscores." /></span>
               </div>
               <div className="field">
                 <label htmlFor="password">Password</label>
                 <input
                   id="password"
-                  className="input"
+                  className={`input ${touched.password && pwError ? 'invalid' : ''}`}
                   type="password"
                   placeholder="••••••••"
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
+                  onBlur={() => setTouched((t) => ({ ...t, password: true }))}
                   autoComplete="current-password"
-                  required
+                  aria-invalid={!!(touched.password && pwError)}
                 />
+                {touched.password && pwError && <FieldError error={pwError} />}
               </div>
               <div style={{ textAlign: 'right', marginTop: 2, marginBottom: 6 }}>
                 <Link to="/forgot" style={{ color: 'var(--ink)', fontFamily: 'var(--font-mono)', fontSize: 11, letterSpacing: '0.08em', textTransform: 'uppercase', fontWeight: 600, borderBottom: '1px solid var(--line-strong)', paddingBottom: 1 }}>Forgot password?</Link>
               </div>
-              <button className="btn btn-primary" style={{ width: '100%', marginTop: 6, borderRadius: 12, padding: '13px' }} disabled={busy}>
-                {busy ? <span className="spinner" /> : <LogIn size={16} />}
-                {busy ? 'Opening…' : 'Open workspace'}
-                {!busy && <ArrowRight size={14} style={{ opacity: 0.7 }} />}
+              <button className="btn btn-primary" style={{ width: '100%', marginTop: 6, borderRadius: 12, padding: '13px' }} disabled={busy || !formValid || !online} title={!online ? 'You are offline' : !formValid ? 'Fix the highlighted fields first' : ''}>
+                {busy ? <span className="spinner" /> : !online ? <WifiOff size={16} /> : <LogIn size={16} />}
+                {busy ? 'Opening…' : !online ? 'Offline — reconnect to sign in' : 'Open workspace'}
+                {!busy && online && <ArrowRight size={14} style={{ opacity: 0.7 }} />}
               </button>
             </form>
           ) : (

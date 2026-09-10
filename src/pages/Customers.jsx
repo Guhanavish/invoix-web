@@ -1,19 +1,27 @@
 import React, { useEffect, useState } from 'react';
-import { Users, Search, Download } from 'lucide-react';
+import { Link } from 'react-router-dom';
+import { Users, Search, Download, CloudOff } from 'lucide-react';
 import { api } from '../api';
 import { useAutoRefresh } from '../useAutoSync';
-import { Empty, Loading } from '../components/ui';
+import { Empty, Skeleton, ErrorState, PageHead, Pager, usePager, OfflineBar, useOnline } from '../components/ui';
 
 export default function Customers() {
   const [customers, setCustomers] = useState(null);
-  const [error, setError] = useState('');
+  const [error, setError] = useState(null);
   const [counts, setCounts] = useState({});
   const [search, setSearch] = useState('');
+  const online = useOnline();
+  const pager = usePager(customers || [], 25);
 
   const load = () => {
     const params = new URLSearchParams();
     if (search) params.set('search', search);
-    api.get(`/data/customers?${params.toString()}`).then((res) => { setCustomers(res.customers); setError(''); }).catch((e) => { setCustomers([]); setError(e.message); });
+    api.get(`/data/customers?${params.toString()}`)
+      .then((res) => { setCustomers(res.customers); setError(null); })
+      .catch((e) => {
+        if (e.status === 404) { setCustomers([]); setError(null); }
+        else { setCustomers([]); setError(e); }
+      });
     api.get('/data/invoices').then((res) => { const c={}; res.invoices.forEach((inv)=>{ c[inv.customer_id]=(c[inv.customer_id]||0)+1; }); setCounts(c); }).catch(()=>{});
   };
 
@@ -30,22 +38,43 @@ export default function Customers() {
 
   return (
     <div>
-      <div style={{ display: 'flex', alignItems: 'baseline', gap: 12, marginBottom: 4 }}>
-        <h1 style={{ fontSize: 36 }}>Customers</h1>
+      <PageHead
+        title="Customers"
+        sub="Your customer book, pressed from the desktop. Each name set in type."
+      >
         <span style={{ fontFamily: 'var(--font-mono)', fontSize: 11, letterSpacing: '0.12em', textTransform: 'uppercase', color: 'var(--stone-light)', border: '1px solid var(--line)', padding: '4px 10px', borderRadius: 999 }}>{customers ? `${customers.length} in book` : ''}</span>
-      </div>
-      <p style={{ fontFamily: 'var(--font-editorial)', fontStyle: 'italic', color: 'var(--stone)', marginBottom: 20 }}>Your customer book, pressed from the desktop. Each name set in type.</p>
+      </PageHead>
+
+      {!online && <OfflineBar />}
 
       <div style={{ display: 'flex', justifyContent: 'space-between', gap: 12, flexWrap: 'wrap', marginBottom: 16 }}>
         <div style={{ position: 'relative' }}>
           <Search size={14} style={{ position: 'absolute', left: 14, top: 14, color: 'var(--stone-light)' }} />
-          <input className="input" style={{ paddingLeft: 38, minWidth: 300, borderRadius: 999 }} placeholder="Search name, GSTIN or phone…" value={search} onChange={(e)=>setSearch(e.target.value)} />
+          <input className="input" style={{ paddingLeft: 38, minWidth: 300, borderRadius: 12 }} placeholder="Search name, GSTIN or phone…" value={search} onChange={(e)=>setSearch(e.target.value)} aria-label="Search customers" />
         </div>
-        <button className="btn btn-ghost btn-sm" onClick={exportCsv} disabled={!customers?.length} style={{ borderRadius: 999 }}><Download size={14} /> Export</button>
+        <button className="btn btn-ghost btn-sm" onClick={exportCsv} disabled={!customers?.length} style={{ borderRadius: 12 }}><Download size={14} /> Export</button>
       </div>
 
       <div className="card" style={{ overflow: 'hidden' }}>
-        {error ? <Empty icon={<Users size={22} />} title="Couldn't load customers" sub={error} /> : customers===null ? <Loading /> : customers.length===0 ? <Empty icon={<Users size={22} />} title="No customers" sub="Add customers in the desktop atelier — they appear here, set." /> : (
+        {error ? (
+          <ErrorState
+            icon={<CloudOff size={22} />}
+            title={api.isNetworkError(error) ? "Can't reach the server" : 'Customers would not load'}
+            sub={error.message}
+            network={api.isNetworkError(error)}
+            onRetry={load}
+            backTo="/app"
+          />
+        ) : customers === null ? (
+          <Skeleton variant="table" rows={8} />
+        ) : customers.length === 0 ? (
+          <Empty
+            icon={<Users size={22} />}
+            title={search ? 'No customers match' : 'No customers yet'}
+            sub={search ? 'Try a shorter search, or clear it to see the whole book.' : 'Add customers in the desktop atelier and they will be set here automatically.'}
+            action={search ? undefined : { label: 'See sync steps on the dashboard', to: '/app' }}
+          />
+        ) : (
           <div className="table-wrap">
             <table className="tbl">
               <thead>
@@ -59,7 +88,7 @@ export default function Customers() {
                 </tr>
               </thead>
               <tbody>
-                {customers.map((c) => (
+                {pager.slice.map((c) => (
                   <tr key={c.id}>
                     <td>
                       <div style={{ fontFamily: 'var(--font-display)', fontWeight: 700, fontSize: 15, letterSpacing: '-0.01em' }}>{c.name}</div>
@@ -77,6 +106,9 @@ export default function Customers() {
           </div>
         )}
       </div>
+      {!error && customers !== null && (
+        <Pager page={pager.page} pages={pager.pages} total={pager.total} perPage={pager.perPage} setPage={pager.setPage} label="customers" />
+      )}
     </div>
   );
 }

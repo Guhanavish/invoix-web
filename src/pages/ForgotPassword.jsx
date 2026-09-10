@@ -1,26 +1,54 @@
 ﻿import React, { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { Receipt, ShieldCheck, KeyRound, MailCheck, ArrowRight } from 'lucide-react';
+import { Receipt, ShieldCheck, KeyRound, MailCheck, ArrowRight, WifiOff } from 'lucide-react';
 import { api } from '../api';
+import { FieldError, OfflineBar, useOnline } from '../components/ui';
+
+const EMAIL_RE = /^[^\s@]{1,64}@[^\s@]{1,253}\.[^\s@]{2,}$/;
 
 export default function ForgotPassword() {
   const navigate = useNavigate();
+  const online = useOnline();
   const [userId, setUserId] = useState('');
   const [email, setEmail] = useState('');
   const [otp, setOtp] = useState('');
   const [newPassword, setNewPassword] = useState('');
   const [confirm, setConfirm] = useState('');
   const [step, setStep] = useState(1);
+  const [touched, setTouched] = useState({});
   const [error, setError] = useState('');
   const [ok, setOk] = useState('');
   const [busy, setBusy] = useState(false);
 
+  const idError = !userId.trim() ? 'Enter your user id.' : '';
+  const emailError = !email.trim()
+    ? 'Enter the email on your account.'
+    : !EMAIL_RE.test(email.trim())
+      ? 'That email does not look complete. Check for typos.'
+      : '';
+  const stepValid = !idError && !emailError;
+
+  const otpError = !otp.trim()
+    ? 'Enter the 6-digit code from your email.'
+    : !/^\d{4,8}$/.test(otp.trim())
+      ? 'Codes are digits only. Check the email again.'
+      : '';
+  const pwError = !newPassword
+    ? 'Choose a new password.'
+    : newPassword.length < 4
+      ? `Add ${4 - newPassword.length} more character${4 - newPassword.length === 1 ? '' : 's'} (minimum 4).`
+      : '';
+  const confirmError = confirm !== newPassword ? 'The two passwords do not match yet.' : '';
+  const resetValid = !otpError && !pwError && !confirmError;
+
   const sendOtp = async (e) => {
     e.preventDefault();
     setError('');
+    setTouched({ userId: true, email: true });
+    if (!stepValid || !online) return;
     setBusy(true);
     try {
-      const res = await api.forgotPassword(userId, email);
+      const res = await api.forgotPassword(userId.trim(), email.trim());
       setOk(res.message || 'Code sent to your email.');
       setStep(2);
     } catch (err) {
@@ -33,17 +61,11 @@ export default function ForgotPassword() {
   const reset = async (e) => {
     e.preventDefault();
     setError('');
-    if (newPassword !== confirm) {
-      setError('Passwords do not match');
-      return;
-    }
-    if (newPassword.length < 4) {
-      setError('Password must be at least 4 characters');
-      return;
-    }
+    setTouched((t) => ({ ...t, otp: true, newPassword: true, confirm: true }));
+    if (!resetValid || !online) return;
     setBusy(true);
     try {
-      await api.resetPassword(userId, email, otp, newPassword);
+      await api.resetPassword(userId.trim(), email.trim(), otp.trim(), newPassword);
       setOk('Password set. Opening sign in…');
       setTimeout(() => navigate('/login', { replace: true }), 1200);
     } catch (err) {
@@ -92,84 +114,97 @@ export default function ForgotPassword() {
           {ok && <div className="ok-box">{ok}</div>}
 
           {step === 1 ? (
-            <form onSubmit={sendOtp}>
+            <form onSubmit={sendOtp} noValidate>
+              <OfflineBar />
               <div className="field">
                 <label htmlFor="fpUserId">User ID</label>
                 <input
                   id="fpUserId"
-                  className="input"
+                  className={`input ${touched.userId && idError ? 'invalid' : ''}`}
                   placeholder="e.g. mehta-fabrics"
                   value={userId}
                   onChange={(e) => setUserId(e.target.value)}
+                  onBlur={() => setTouched((t) => ({ ...t, userId: true }))}
                   autoComplete="username"
-                  required
                   autoFocus
+                  aria-invalid={!!(touched.userId && idError)}
                 />
+                {touched.userId && idError && <FieldError error={idError} />}
               </div>
               <div className="field">
                 <label htmlFor="fpEmail">Email</label>
                 <input
                   id="fpEmail"
-                  className="input"
+                  className={`input ${touched.email && emailError ? 'invalid' : ''}`}
                   type="email"
                   placeholder="you@example.com"
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
+                  onBlur={() => setTouched((t) => ({ ...t, email: true }))}
                   autoComplete="email"
-                  required
+                  aria-invalid={!!(touched.email && emailError)}
                 />
+                <FieldError error={touched.email ? emailError : ''} hint="The verified email on your account." />
               </div>
-              <button className="btn btn-primary" style={{ width: '100%', marginTop: 6, borderRadius: 12, padding: '13px' }} disabled={busy}>
-                {busy ? <span className="spinner" /> : <MailCheck size={16} />}
-                {busy ? 'Sending…' : 'Send code'}
-                {!busy && <ArrowRight size={14} style={{ opacity: 0.7 }} />}
+              <button className="btn btn-primary" style={{ width: '100%', marginTop: 6, borderRadius: 12, padding: '13px' }} disabled={busy || !stepValid || !online} title={!online ? 'You are offline' : !stepValid ? 'Fix the highlighted fields first' : ''}>
+                {busy ? <span className="spinner" /> : !online ? <WifiOff size={16} /> : <MailCheck size={16} />}
+                {busy ? 'Sending…' : !online ? 'Offline — reconnect to continue' : 'Send code'}
+                {!busy && online && <ArrowRight size={14} style={{ opacity: 0.7 }} />}
               </button>
             </form>
           ) : (
-            <form onSubmit={reset}>
+            <form onSubmit={reset} noValidate>
+              <OfflineBar />
               <div className="field">
                 <label htmlFor="fpOtp">One-time code</label>
                 <input
                   id="fpOtp"
-                  className="input"
+                  className={`input ${touched.otp && otpError ? 'invalid' : ''}`}
                   placeholder="6-digit code"
                   value={otp}
-                  onChange={(e) => setOtp(e.target.value)}
+                  onChange={(e) => setOtp(e.target.value.replace(/\D/g, '').slice(0, 8))}
+                  onBlur={() => setTouched((t) => ({ ...t, otp: true }))}
                   autoComplete="one-time-code"
-                  required
+                  inputMode="numeric"
                   autoFocus
                   style={{ letterSpacing: '0.2em', fontFamily: 'var(--font-mono)' }}
+                  aria-invalid={!!(touched.otp && otpError)}
                 />
+                <FieldError error={touched.otp ? otpError : ''} hint="Digits only. Valid for 10 minutes." />
               </div>
               <div className="field">
                 <label htmlFor="fpPass">New password</label>
                 <input
                   id="fpPass"
-                  className="input"
+                  className={`input ${touched.newPassword && pwError ? 'invalid' : ''}`}
                   type="password"
                   placeholder="At least 4 characters"
                   value={newPassword}
                   onChange={(e) => setNewPassword(e.target.value)}
+                  onBlur={() => setTouched((t) => ({ ...t, newPassword: true }))}
                   autoComplete="new-password"
-                  required
+                  aria-invalid={!!(touched.newPassword && pwError)}
                 />
+                <FieldError error={touched.newPassword ? pwError : ''} hint="At least 4 characters. Longer is stronger." />
               </div>
               <div className="field">
                 <label htmlFor="fpConfirm">Confirm</label>
                 <input
                   id="fpConfirm"
-                  className="input"
+                  className={`input ${touched.confirm && confirmError ? 'invalid' : ''}`}
                   type="password"
                   placeholder="Repeat password"
                   value={confirm}
                   onChange={(e) => setConfirm(e.target.value)}
+                  onBlur={() => setTouched((t) => ({ ...t, confirm: true }))}
                   autoComplete="new-password"
-                  required
+                  aria-invalid={!!(touched.confirm && confirmError)}
                 />
+                {touched.confirm && confirmError && <FieldError error={confirmError} />}
               </div>
-              <button className="btn btn-primary" style={{ width: '100%', marginTop: 6, borderRadius: 12, padding: '13px' }} disabled={busy}>
-                {busy ? <span className="spinner" /> : <KeyRound size={16} />}
-                {busy ? 'Setting…' : 'Set password'}
+              <button className="btn btn-primary" style={{ width: '100%', marginTop: 6, borderRadius: 12, padding: '13px' }} disabled={busy || !resetValid || !online} title={!online ? 'You are offline' : !resetValid ? 'Fix the highlighted fields first' : ''}>
+                {busy ? <span className="spinner" /> : !online ? <WifiOff size={16} /> : <KeyRound size={16} />}
+                {busy ? 'Setting…' : !online ? 'Offline — reconnect to continue' : 'Set password'}
               </button>
               <button
                 type="button"

@@ -1,17 +1,23 @@
 import React, { useEffect, useState } from 'react';
-import { User, Mail, Phone, Building2, MapPin, ShieldCheck, CheckCircle2, AlertCircle, Clock, Send } from 'lucide-react';
+import { User, Mail, Phone, Building2, MapPin, ShieldCheck, CheckCircle2, AlertCircle, Clock, Send, CloudOff, WifiOff, Hourglass, CheckCheck, XCircle } from 'lucide-react';
 import { api } from '../api';
+import { Skeleton, ErrorState, FieldError, OfflineBar, useOnline } from '../components/ui';
+
+const EMAIL_RE = /^[^\s@]{1,64}@[^\s@]{1,253}\.[^\s@]{2,}$/;
 
 export default function Profile() {
   const [profile, setProfile] = useState(null);
   const [approvals, setApprovals] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
+  const [loadError, setLoadError] = useState(null);
   const [ok, setOk] = useState('');
   const [verifying, setVerifying] = useState(false);
   const [verifyCode, setVerifyCode] = useState('');
   const [edit, setEdit] = useState({ name: '', phone: '', businessName: '', address: '', city: '', email: '' });
   const [saving, setSaving] = useState(false);
+  const [emailTouched, setEmailTouched] = useState(false);
+  const online = useOnline();
 
   const load = async () => {
     try {
@@ -27,8 +33,10 @@ export default function Profile() {
       });
       const appr = await api.getProfileApprovals();
       setApprovals(appr.approvals || []);
+      setLoadError(null);
     } catch (e) {
       setError(e.message);
+      setLoadError(e);
     } finally {
       setLoading(false);
     }
@@ -76,8 +84,36 @@ export default function Profile() {
     finally { setSaving(false); }
   };
 
-  if (loading) return <div style={{ padding: 32, color: 'var(--stone)' }}>Loading profile…</div>;
-  if (!profile) return <div style={{ padding: 32 }}><div className="err-box">{error || 'Could not load profile'}</div></div>;
+  if (loading) {
+    return (
+      <div style={{ maxWidth: 720, margin: '0 auto' }}>
+        {!online && <OfflineBar />}
+        <Skeleton variant="lines" rows={2} />
+        <div className="card" style={{ padding: 20, marginTop: 16 }}>
+          <Skeleton variant="lines" rows={5} />
+        </div>
+      </div>
+    );
+  }
+  if (!profile) {
+    return (
+      <div style={{ maxWidth: 720, margin: '0 auto' }}>
+        {!online && <OfflineBar />}
+        <ErrorState
+          icon={<CloudOff size={22} />}
+          title={loadError && api.isNetworkError(loadError) ? "Can't reach the server" : 'Profile would not load'}
+          sub={error || 'We could not open your profile. Try again.'}
+          network={!!(loadError && api.isNetworkError(loadError))}
+          onRetry={load}
+          backTo="/app"
+        />
+      </div>
+    );
+  }
+
+  const emailError = edit.email.trim() && !EMAIL_RE.test(edit.email.trim())
+    ? 'That email does not look complete. Approval will still be requested, but re-verification will fail until it is fixed.'
+    : '';
 
   return (
     <div style={{ maxWidth: 720, margin: '0 auto' }}>
@@ -86,6 +122,7 @@ export default function Profile() {
         <div style={{ fontSize: 13, color: 'var(--stone)', marginTop: 4 }}>Manage your business identity. Email must be verified for password reset. Changes require approval in the desktop app and will sync to the web.</div>
       </div>
 
+      {!online && <OfflineBar />}
       {error && <div className="err-box" style={{ marginBottom: 12 }}>{error}</div>}
       {ok && <div className="ok-box" style={{ marginBottom: 12 }}>{ok}</div>}
 
@@ -119,12 +156,23 @@ export default function Profile() {
             <div className="field"><label><User size={12} style={{ marginRight: 4 }} /> Display name</label><input className="input" value={edit.name} onChange={(e) => setEdit({ ...edit, name: e.target.value })} placeholder="Your name" /></div>
             <div className="field"><label><Phone size={12} style={{ marginRight: 4 }} /> Phone</label><input className="input" value={edit.phone} onChange={(e) => setEdit({ ...edit, phone: e.target.value })} placeholder="Phone" /></div>
             <div className="field"><label><Building2 size={12} style={{ marginRight: 4 }} /> Business name</label><input className="input" value={edit.businessName} onChange={(e) => setEdit({ ...edit, businessName: e.target.value })} placeholder="Mehta Fabrics" /></div>
-            <div className="field"><label><Mail size={12} style={{ marginRight: 4 }} /> Email</label><input className="input" type="email" value={edit.email} onChange={(e) => setEdit({ ...edit, email: e.target.value })} /></div>
+            <div className="field">
+              <label><Mail size={12} style={{ marginRight: 4 }} /> Email</label>
+              <input
+                className={`input ${emailTouched && emailError ? 'invalid' : ''}`}
+                type="email"
+                value={edit.email}
+                onChange={(e) => setEdit({ ...edit, email: e.target.value })}
+                onBlur={() => setEmailTouched(true)}
+                aria-invalid={!!(emailTouched && emailError)}
+              />
+              <FieldError error={emailTouched ? emailError : ''} hint="Changing email needs re-verification after approval." />
+            </div>
             <div className="field" style={{ gridColumn: '1 / -1' }}><label><MapPin size={12} style={{ marginRight: 4 }} /> Address</label><input className="input" value={edit.address} onChange={(e) => setEdit({ ...edit, address: e.target.value })} placeholder="Street, area" /></div>
             <div className="field"><label>City</label><input className="input" value={edit.city} onChange={(e) => setEdit({ ...edit, city: e.target.value })} placeholder="Surat" /></div>
             <div className="field" style={{ display: 'flex', alignItems: 'flex-end' }}><div style={{ fontSize: 11, color: 'var(--stone-light)', lineHeight: 1.4 }}>Changing email will require re-verification. All changes are held for approval in the desktop app → <b>Approvals</b>.</div></div>
           </div>
-          <button className="btn btn-primary" style={{ marginTop: 12 }} disabled={saving}>{saving ? 'Sending…' : 'Request approval for changes'}</button>
+          <button className="btn btn-primary" style={{ marginTop: 12 }} disabled={saving || !online} title={!online ? 'You are offline. Reconnect to send this request.' : ''}>{saving ? 'Sending…' : !online ? 'Offline — reconnect to send' : 'Request approval for changes'}</button>
         </form>
       </div>
 
@@ -138,7 +186,13 @@ export default function Profile() {
               <div key={a.id} style={{ border: '1px solid var(--line)', borderRadius: 8, padding: 12, background: a.status === 'pending' ? '#fffbeb' : '#f8fafc' }}>
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 6 }}>
                   <span style={{ fontFamily: 'var(--font-mono)', fontSize: 11, textTransform: 'uppercase', letterSpacing: '0.08em', color: 'var(--stone)' }}>{new Date(a.createdAt).toLocaleString()}</span>
-                  <span className="badge" style={{ background: a.status === 'approved' ? '#dcfce7' : a.status === 'rejected' ? '#fee2e2' : '#fef3c7', color: a.status === 'approved' ? '#166534' : a.status === 'rejected' ? '#991b1b' : '#92400e', border: '1px solid var(--line)' }}>{a.status}</span>
+                  {a.status === 'approved' ? (
+                    <span className="badge" style={{ background: '#dcfce7', color: '#166534', border: '1px solid #bbf7d0' }}><CheckCheck size={12} style={{ marginRight: 4 }} /> Approved and applied</span>
+                  ) : a.status === 'rejected' ? (
+                    <span className="badge" style={{ background: '#fee2e2', color: '#991b1b', border: '1px solid #fecaca' }}><XCircle size={12} style={{ marginRight: 4 }} /> Rejected in app</span>
+                  ) : (
+                    <span className="badge" style={{ background: '#fef3c7', color: '#92400e', border: '1px solid #fde68a' }}><Hourglass size={12} style={{ marginRight: 4 }} /> Awaiting desktop approval</span>
+                  )}
                 </div>
                 <div style={{ fontSize: 13 }}>
                   {Object.entries(a.changes).map(([k, v]) => (

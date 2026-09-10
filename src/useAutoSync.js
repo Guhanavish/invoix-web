@@ -18,9 +18,10 @@ async function tick() {
       window.dispatchEvent(new CustomEvent('invoix:synced', { detail: s }));
     }
   } catch (e) {
-    if (e && e.status === 401) {
-      api.clearSession();
-      window.location.href = '/login';
+    if (e && e.status === 401 && !e.sessionExpired) {
+      // api.request already bounced expired sessions to sign-in with a
+      // return path; this covers any direct 401s the client missed.
+      api.handleUnauthorized();
     }
   }
 }
@@ -50,10 +51,9 @@ export function useSyncStatus() {
         })
         .catch((e) => {
           if (!alive) return;
-          if (e && e.status === 401) {
-            api.clearSession();
-            window.location.href = '/login';
-          } else {
+          if (e && e.status === 401 && !e.sessionExpired) {
+            api.handleUnauthorized();
+          } else if (!(e && e.sessionExpired)) {
             setStatus((p) => ({ ...p, loading: false }));
           }
         });

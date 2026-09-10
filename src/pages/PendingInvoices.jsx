@@ -1,16 +1,19 @@
 import React, { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
-import { Inbox, RefreshCw, FilePlus2, Trash2, Clock, FileText } from 'lucide-react';
+import { Inbox, RefreshCw, FilePlus2, Trash2, Clock, CloudOff } from 'lucide-react';
 import { api, fmtMoney, fmtDateTime } from '../api';
 import { useAutoRefresh } from '../useAutoSync';
-import { Badge, Empty, Loading } from '../components/ui';
+import { Badge, Skeleton, ErrorState, OfflineBar, useOnline } from '../components/ui';
 
 export default function PendingInvoices() {
   const [invoices, setInvoices] = useState(null);
-  const [error, setError] = useState('');
+  const [error, setError] = useState(null);
+  const online = useOnline();
 
   const load = () => {
-    api.getPendingInvoices().then((res) => setInvoices(res.invoices)).catch((e) => { setError(e.message); setInvoices([]); });
+    api.getPendingInvoices()
+      .then((res) => { setInvoices(res.invoices); setError(null); })
+      .catch((e) => { setInvoices([]); setError(e); });
   };
 
   useEffect(() => { load(); }, []);
@@ -18,7 +21,7 @@ export default function PendingInvoices() {
 
   const cancel = async (id) => {
     if (!window.confirm('Delete this draft? It has not been pressed in the desktop atelier.')) return;
-    try { await api.deletePendingInvoice(id); load(); } catch (e) { setError(e.message); }
+    try { await api.deletePendingInvoice(id); load(); } catch (e) { setError(e); }
   };
 
   const totalOf = (p) =>
@@ -36,14 +39,25 @@ export default function PendingInvoices() {
       </div>
       <p style={{ fontFamily: 'var(--font-mono)', fontSize: 10, letterSpacing: '0.14em', textTransform: 'uppercase', color: 'var(--stone-light)', marginBottom: 18 }}>Web drafts — become real only after desktop approval.</p>
 
+      {!online && <OfflineBar />}
+
       <div style={{ display: 'flex', gap: 10, marginBottom: 16 }}>
-        <button className="btn btn-ghost btn-sm" onClick={load} style={{ borderRadius: 999 }}><RefreshCw size={13} /> Refresh</button>
-        <Link to="/app/invoices/new" className="btn btn-primary btn-sm" style={{ borderRadius: 999 }}><FilePlus2 size={14} /> New draft</Link>
+        <button className="btn btn-ghost btn-sm" onClick={load} style={{ borderRadius: 12 }}><RefreshCw size={13} /> Refresh</button>
+        <Link to="/app/invoices/new" className="btn btn-primary btn-sm" style={{ borderRadius: 12 }}><FilePlus2 size={14} /> New draft</Link>
       </div>
 
-      {error && <div className="err-box" style={{ marginBottom: 16 }}>{error}</div>}
+      {error && (
+        <ErrorState
+          icon={<CloudOff size={22} />}
+          title={api.isNetworkError(error) ? "Can't reach the server" : 'Drafts would not load'}
+          sub={error.message}
+          network={api.isNetworkError(error)}
+          onRetry={load}
+          backTo="/app"
+        />
+      )}
 
-      {!invoices ? <Loading /> : invoices.length === 0 ? (
+      {!error && (!invoices ? <Skeleton variant="lines" rows={3} /> : invoices.length === 0 ? (
         <div className="card" style={{ padding: 48, textAlign: 'center', borderStyle: 'dashed' }}>
           <div style={{ width: 56, height: 56, borderRadius: 14, background: 'var(--paper-2)', border: '1px solid var(--line)', display: 'grid', placeItems: 'center', margin: '0 auto 14px', color: 'var(--stone-light)' }}><Inbox size={22} /></div>
           <h3 style={{ fontFamily: 'var(--font-display)', fontSize: 18 }}>No drafts in the tray</h3>
@@ -84,7 +98,7 @@ export default function PendingInvoices() {
             </div>
           ))}
         </div>
-      )}
+      ))}
     </div>
   );
 }

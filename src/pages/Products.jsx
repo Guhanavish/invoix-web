@@ -1,18 +1,25 @@
 import React, { useEffect, useState } from 'react';
-import { Package, Search, Download } from 'lucide-react';
+import { Package, Search, Download, CloudOff } from 'lucide-react';
 import { api, fmtMoney } from '../api';
 import { useAutoRefresh } from '../useAutoSync';
-import { Empty, Loading } from '../components/ui';
+import { Empty, Skeleton, ErrorState, PageHead, Pager, usePager, OfflineBar, useOnline } from '../components/ui';
 
 export default function Products() {
   const [products, setProducts] = useState(null);
-  const [error, setError] = useState('');
+  const [error, setError] = useState(null);
   const [search, setSearch] = useState('');
+  const online = useOnline();
+  const pager = usePager(products || [], 25);
 
   const load = () => {
     const params = new URLSearchParams();
     if (search) params.set('search', search);
-    api.get(`/data/products?${params.toString()}`).then((res)=>{setProducts(res.products); setError('');}).catch((e)=>{setProducts([]); setError(e.message);});
+    api.get(`/data/products?${params.toString()}`)
+      .then((res)=>{setProducts(res.products); setError(null);})
+      .catch((e)=>{
+        if (e.status === 404) { setProducts([]); setError(null); }
+        else { setProducts([]); setError(e); }
+      });
   };
 
   useEffect(()=>{ const t=setTimeout(load,350); return()=>clearTimeout(t); },[search]);
@@ -29,22 +36,43 @@ export default function Products() {
 
   return (
     <div>
-      <div style={{ display: 'flex', alignItems: 'baseline', gap: 14, flexWrap: 'wrap', marginBottom: 4 }}>
-        <h1 style={{ fontSize: 36 }}>Products</h1>
+      <PageHead
+        title="Products"
+        sub="Inventory, pressed and priced."
+      >
         <span style={{ fontFamily: 'var(--font-editorial)', fontStyle: 'italic', color: 'var(--stone)' }}>{products?.length ?? 0} items · {fmtMoney(stockValue)} in stock</span>
-      </div>
-      <p style={{ fontFamily: 'var(--font-mono)', fontSize: 10, letterSpacing: '0.14em', textTransform: 'uppercase', color: 'var(--stone-light)', marginBottom: 18 }}>Inventory, pressed and priced.</p>
+      </PageHead>
+
+      {!online && <OfflineBar />}
 
       <div style={{ display: 'flex', justifyContent: 'space-between', gap: 12, flexWrap: 'wrap', marginBottom: 16 }}>
         <div style={{ position: 'relative' }}>
           <Search size={14} style={{ position: 'absolute', left: 14, top: 14, color: 'var(--stone-light)' }} />
-          <input className="input" style={{ paddingLeft: 38, minWidth: 300, borderRadius: 999 }} placeholder="Search name or HSN…" value={search} onChange={(e)=>setSearch(e.target.value)} />
+          <input className="input" style={{ paddingLeft: 38, minWidth: 300, borderRadius: 12 }} placeholder="Search name or HSN…" value={search} onChange={(e)=>setSearch(e.target.value)} aria-label="Search products" />
         </div>
-        <button className="btn btn-ghost btn-sm" onClick={exportCsv} disabled={!products?.length} style={{ borderRadius: 999 }}><Download size={14}/> Export</button>
+        <button className="btn btn-ghost btn-sm" onClick={exportCsv} disabled={!products?.length} style={{ borderRadius: 12 }}><Download size={14}/> Export</button>
       </div>
 
       <div className="card" style={{ overflow: 'hidden' }}>
-        {error ? <Empty icon={<Package size={22} />} title="Couldn't load products" sub={error} /> : products===null ? <Loading /> : products.length===0 ? <Empty icon={<Package size={22} />} title="No products" sub="Add products in the desktop atelier — they appear here." /> : (
+        {error ? (
+          <ErrorState
+            icon={<CloudOff size={22} />}
+            title={api.isNetworkError(error) ? "Can't reach the server" : 'Products would not load'}
+            sub={error.message}
+            network={api.isNetworkError(error)}
+            onRetry={load}
+            backTo="/app"
+          />
+        ) : products === null ? (
+          <Skeleton variant="table" rows={8} />
+        ) : products.length === 0 ? (
+          <Empty
+            icon={<Package size={22} />}
+            title={search ? 'No products match' : 'No products yet'}
+            sub={search ? 'Try a shorter search, or clear it to see everything in stock.' : 'Add products in the desktop atelier and they will be priced here automatically.'}
+            action={search ? undefined : { label: 'See sync steps on the dashboard', to: '/app' }}
+          />
+        ) : (
           <div className="table-wrap">
             <table className="tbl">
               <thead>
@@ -59,7 +87,7 @@ export default function Products() {
                 </tr>
               </thead>
               <tbody>
-                {products.map((p)=>(
+                {pager.slice.map((p)=>(
                   <tr key={p.id}>
                     <td>
                       <div style={{ fontFamily: 'var(--font-display)', fontWeight: 700, fontSize: 14 }}>{p.name}</div>
@@ -78,6 +106,9 @@ export default function Products() {
           </div>
         )}
       </div>
+      {!error && products !== null && (
+        <Pager page={pager.page} pages={pager.pages} total={pager.total} perPage={pager.perPage} setPage={pager.setPage} label="products" />
+      )}
     </div>
   );
 }

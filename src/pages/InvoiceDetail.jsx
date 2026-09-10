@@ -1,38 +1,76 @@
 import React, { useEffect, useState } from 'react';
 import { Link, useParams } from 'react-router-dom';
-import { ArrowLeft, FileText, Printer, Eye } from 'lucide-react';
+import { ArrowLeft, FileText, Printer, Eye, CloudOff, FileX2 } from 'lucide-react';
 import { api, fmtMoney, fmtDate, invoiceStatus } from '../api';
 import { useAutoRefresh } from '../useAutoSync';
-import { Badge, Empty, Loading } from '../components/ui';
+import { Badge, Empty, Skeleton, ErrorState, OfflineBar, useOnline } from '../components/ui';
 import InvoicePaper from '../components/InvoicePaper';
 
 export default function InvoiceDetail() {
   const { id } = useParams();
   const [data, setData] = useState(null);
   const [company, setCompany] = useState(null);
-  const [error, setError] = useState('');
+  const [error, setError] = useState(null);
   const [view, setView] = useState('paper'); // 'paper' | 'details'
+  const online = useOnline();
 
   const load = () => {
-    api.get(`/data/invoices/${id}`).then(setData).catch((e) => setError(e.message));
+    api.get(`/data/invoices/${id}`).then((d) => { setData(d); setError(null); }).catch((e) => setError(e));
     api.get('/data/company').then((r) => setCompany(r.companies?.[0] || r.active || null)).catch(() => {});
   };
 
   useEffect(() => {
     setData(null);
+    setError(null);
     load();
   }, [id]);
 
   useAutoRefresh(load);
 
-  if (error) return <Empty icon={<FileText size={22} />} title="Invoice not found" sub={error} />;
-  if (!data) return <Loading />;
+  if (error && error.status === 404) {
+    return (
+      <div>
+        {!online && <OfflineBar />}
+        <Empty
+          icon={<FileX2 size={22} />}
+          title="Invoice not found"
+          sub="It may have been deleted in the desktop app, or the address is wrong. Check the invoices list."
+          action={{ label: 'Back to invoices', to: '/app/invoices', kind: 'btn-ghost' }}
+        />
+      </div>
+    );
+  }
+  if (error) {
+    return (
+      <div>
+        {!online && <OfflineBar />}
+        <ErrorState
+          icon={<CloudOff size={22} />}
+          title={api.isNetworkError(error) ? "Can't reach the server" : 'Invoice would not load'}
+          sub={error.message}
+          network={api.isNetworkError(error)}
+          onRetry={load}
+          backTo="/app/invoices"
+          backLabel="Back to invoices"
+        />
+      </div>
+    );
+  }
+  if (!data) {
+    return (
+      <div>
+        {!online && <OfflineBar />}
+        <Skeleton variant="paper" />
+      </div>
+    );
+  }
 
   const { invoice: inv } = data;
   const st = invoiceStatus(inv);
 
   return (
     <div>
+      {!online && <OfflineBar />}
       <nav aria-label="Breadcrumb" style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 18, flexWrap: 'wrap', fontFamily: 'var(--font-mono)', fontSize: 11, letterSpacing: '0.1em', textTransform: 'uppercase', fontWeight: 600, color: 'var(--stone)' }}>
         <Link to="/app" style={{ color: 'inherit' }}>Workspace</Link>
         <span aria-hidden="true">/</span>

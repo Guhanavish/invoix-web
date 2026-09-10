@@ -1,8 +1,8 @@
 import React, { useEffect, useState } from 'react';
-import { BarChart3, Download } from 'lucide-react';
+import { BarChart3, Download, CloudOff } from 'lucide-react';
 import { api, fmtMoney, fmtDate } from '../api';
 import { useAutoRefresh } from '../useAutoSync';
-import { Empty, Loading } from '../components/ui';
+import { Empty, Skeleton, ErrorState, PageHead, OfflineBar, useOnline } from '../components/ui';
 
 const MONTHS = Array.from({ length: 6 }, (_, i) => { const d=new Date(); d.setMonth(d.getMonth()-i); return d.toISOString().slice(0,7); });
 
@@ -11,17 +11,37 @@ export default function Reports() {
   const [g3,setG3]=useState(null);
   const [aging,setAging]=useState(null);
   const [month,setMonth]=useState(MONTHS[0]);
-  const [error,setError]=useState('');
+  const [error,setError]=useState(null);
+  const online = useOnline();
 
   const load=()=>{
     const from=`${month}-01`;
     const to=new Date(new Date(from).setMonth(new Date(from).getMonth()+1)).toISOString().slice(0,10);
-    Promise.all([api.get(`/data/reports/gstr1?from=${from}&to=${to}`), api.get(`/data/reports/gstr3b?from=2000-01-01&to=2999-12-31`), api.get(`/data/reports/aging`)]).then(([a,b,c])=>{setG1(a); setG3(b); setAging(c);}).catch((e)=>setError(e.message));
+    Promise.all([api.get(`/data/reports/gstr1?from=${from}&to=${to}`), api.get(`/data/reports/gstr3b?from=2000-01-01&to=2999-12-31`), api.get(`/data/reports/aging`)]).then(([a,b,c])=>{setG1(a); setG3(b); setAging(c); setError(null);}).catch((e)=>{
+      if (e.status === 404) {
+        // Nothing synced yet: render honest empty reports, not an error.
+        setG1({ count: 0, sales: [], b2b: [], b2c: [], totalTaxable: 0, totalCgst: 0, totalSgst: 0, totalIgst: 0, totalInvoiceValue: 0 });
+        setG3({ sales: { taxable: 0 }, purchases: { taxable: 0 }, netTaxLiability: 0 });
+        setAging({ overdue: [], buckets: {}, totalOutstanding: 0, count: 0 });
+        setError(null);
+      } else setError(e);
+    });
   };
   useEffect(()=>{ load(); },[month]);
   useAutoRefresh(load);
-  if(error) return <Empty icon={<BarChart3 size={22} />} title="No data to report" sub={error} />;
-  if(!g1||!g3||!aging) return <Loading />;
+  if(error && error.status !== 404) {
+    return (
+      <ErrorState
+        icon={<CloudOff size={22} />}
+        title={api.isNetworkError(error) ? "Can't reach the server" : 'Reports would not load'}
+        sub={error.message}
+        network={api.isNetworkError(error)}
+        onRetry={load}
+        backTo="/app"
+      />
+    );
+  }
+  if(!g1||!g3||!aging) return <Skeleton variant="cards" />;
 
   const exportG1=()=>{
     const rows=[['Invoice No','Date','Customer','GSTIN','Supply','Taxable','CGST','SGST','IGST','Total'], ...g1.sales.map((s)=>[s.invoice_no,s.invoice_date,s.customer_name,s.customer_gstin,s.supply_type,s.sub_total,s.cgst_total,s.sgst_total,s.igst_total,s.grand_total])];
@@ -31,6 +51,7 @@ export default function Reports() {
 
   return (
     <div>
+      {!online && <OfflineBar />}
       <div style={{ display: 'flex', alignItems: 'baseline', gap: 12, marginBottom: 4 }}>
         <h1 style={{ fontSize: 36 }}>Reports</h1>
         <span style={{ fontFamily: 'var(--font-editorial)', fontStyle: 'italic', color: 'var(--stone)' }}>GSTR &amp; aging — set from your figures.</span>

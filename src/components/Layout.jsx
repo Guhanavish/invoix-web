@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import { NavLink, Outlet, useNavigate } from 'react-router-dom';
 import {
   LayoutDashboard, FileText, Users, Package, BookOpen, BarChart3,
@@ -22,6 +22,17 @@ const NAV = [
 export default function Layout() {
   const navigate = useNavigate();
   const sync = useSyncStatus();
+  const [installer, setInstaller] = useState(null);
+
+  useEffect(() => {
+    api.get('/version')
+      .then((v) => setInstaller(v.files?.exe || v.files?.zip || null))
+      .catch(() => {});
+  }, []);
+
+  const installerHref = installer
+    ? `/api/download/installer/${encodeURIComponent(installer.name)}`
+    : '/api/download/installer/Invoix%20Setup%201.0.2.exe';
 
   const logout = () => {
     api.clearSession();
@@ -48,7 +59,7 @@ export default function Layout() {
         ))}
 
         <div className="nav-sec">Archive</div>
-        <a className="nav-link" href="/api/download/installer/Invoix%20Setup%201.0.0.exe" download>
+        <a className="nav-link" href={installerHref} download={installer ? installer.name : undefined}>
           <Download size={16} />
           Download app
         </a>

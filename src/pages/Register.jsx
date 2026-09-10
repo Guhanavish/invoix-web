@@ -1,15 +1,21 @@
 ﻿import React, { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { Receipt, UserPlus, ShieldCheck, ArrowRight } from 'lucide-react';
+import { Receipt, UserPlus, ShieldCheck, ArrowRight, WifiOff } from 'lucide-react';
 import { api } from '../api';
 import GoogleButton from '../components/GoogleButton';
+import { FieldError, OfflineBar, useOnline } from '../components/ui';
+
+const USER_ID_RE = /^[a-z0-9][a-z0-9._-]{1,31}$/i;
+const EMAIL_RE = /^[^\s@]{1,64}@[^\s@]{1,253}\.[^\s@]{2,}$/;
 
 export default function Register() {
   const navigate = useNavigate();
+  const online = useOnline();
   const [userId, setUserId] = useState('');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [confirm, setConfirm] = useState('');
+  const [touched, setTouched] = useState({});
   const [error, setError] = useState('');
   const [ok, setOk] = useState('');
   const [busy, setBusy] = useState(false);
@@ -24,13 +30,35 @@ export default function Register() {
     setError(err.message || 'Google sign-in failed');
   };
 
+  const idError = !userId.trim()
+    ? 'Pick a user id for your ledger.'
+    : !USER_ID_RE.test(userId.trim())
+      ? 'Use 2-32 characters: letters, numbers, dots, dashes or underscores.'
+      : '';
+  const emailError = !email.trim()
+    ? 'Enter the email where we should send the code.'
+    : !EMAIL_RE.test(email.trim())
+      ? 'That email does not look complete. Check for typos.'
+      : '';
+  const pwError = !password
+    ? 'Choose a password.'
+    : password.length < 4
+      ? `Add ${4 - password.length} more character${4 - password.length === 1 ? '' : 's'} (minimum 4).`
+      : password.length > 128
+        ? 'Keep it under 128 characters.'
+        : '';
+  const confirmError = !confirm
+    ? 'Repeat the password.'
+    : confirm !== password
+      ? 'The two passwords do not match yet.'
+      : '';
+  const formValid = !idError && !emailError && !pwError && !confirmError;
+
   const submit = async (e) => {
     e.preventDefault();
     setError(''); setOk('');
-    if (password !== confirm) {
-      setError('Passwords do not match');
-      return;
-    }
+    setTouched({ userId: true, email: true, password: true, confirm: true });
+    if (!formValid || !online) return;
     setBusy(true);
     try {
       const res = await api.post('/auth/register', { userId, password, email });
@@ -132,7 +160,8 @@ export default function Register() {
           {ok && <div className="ok-box">{ok}</div>}
 
           {!needsVerify ? (
-            <form onSubmit={submit}>
+            <form onSubmit={submit} noValidate>
+              <OfflineBar />
               <GoogleButton
                 onSuccess={onGoogleSuccess}
                 onError={onGoogleError}
@@ -143,61 +172,66 @@ export default function Register() {
                 <label htmlFor="rUserId">User ID</label>
                 <input
                   id="rUserId"
-                  className="input"
+                  className={`input ${touched.userId && idError ? 'invalid' : ''}`}
                   placeholder="e.g. mehta-fabrics"
                   value={userId}
                   onChange={(e) => setUserId(e.target.value)}
+                  onBlur={() => setTouched((t) => ({ ...t, userId: true }))}
                   autoComplete="username"
-                  required
                   autoFocus
+                  aria-invalid={!!(touched.userId && idError)}
                 />
+                <FieldError error={touched.userId ? idError : ''} hint="This becomes your ledger's address. Letters, numbers, dots, dashes, underscores." />
               </div>
               <div className="field">
                 <label htmlFor="rEmail">Email</label>
                 <input
                   id="rEmail"
-                  className="input"
+                  className={`input ${touched.email && emailError ? 'invalid' : ''}`}
                   type="email"
                   placeholder="you@example.com"
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
+                  onBlur={() => setTouched((t) => ({ ...t, email: true }))}
                   autoComplete="email"
-                  required
+                  aria-invalid={!!(touched.email && emailError)}
                 />
-                <small style={{ color: 'var(--stone)', fontFamily: 'var(--font-editorial)', fontStyle: 'italic', fontSize: 12, display: 'block', marginTop: 4 }}>
-                  We'll send a verification code to this email. Required for password recovery.
-                </small>
+                <FieldError error={touched.email ? emailError : ''} hint="We'll send a verification code here. Required for password recovery." />
               </div>
               <div className="field">
                 <label htmlFor="rPassword">Password</label>
                 <input
                   id="rPassword"
-                  className="input"
+                  className={`input ${touched.password && pwError ? 'invalid' : ''}`}
                   type="password"
                   placeholder="At least 4 characters"
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
+                  onBlur={() => setTouched((t) => ({ ...t, password: true }))}
                   autoComplete="new-password"
-                  required
+                  aria-invalid={!!(touched.password && pwError)}
                 />
+                <FieldError error={touched.password ? pwError : ''} hint="At least 4 characters. Longer is stronger." />
               </div>
               <div className="field">
                 <label htmlFor="rConfirm">Confirm password</label>
                 <input
                   id="rConfirm"
-                  className="input"
+                  className={`input ${touched.confirm && confirmError ? 'invalid' : ''}`}
                   type="password"
                   placeholder="Repeat your password"
                   value={confirm}
                   onChange={(e) => setConfirm(e.target.value)}
+                  onBlur={() => setTouched((t) => ({ ...t, confirm: true }))}
                   autoComplete="new-password"
-                  required
+                  aria-invalid={!!(touched.confirm && confirmError)}
                 />
+                {touched.confirm && confirmError && <FieldError error={confirmError} />}
               </div>
-              <button className="btn btn-primary" style={{ width: '100%', marginTop: 6, borderRadius: 12, padding: '13px' }} disabled={busy}>
-                {busy ? <span className="spinner" /> : <UserPlus size={16} />}
-                {busy ? 'Setting…' : 'Create folio'}
-                {!busy && <ArrowRight size={14} style={{ opacity: 0.7 }} />}
+              <button className="btn btn-primary" style={{ width: '100%', marginTop: 6, borderRadius: 12, padding: '13px' }} disabled={busy || !formValid || !online} title={!online ? 'You are offline' : !formValid ? 'Fix the highlighted fields first' : ''}>
+                {busy ? <span className="spinner" /> : !online ? <WifiOff size={16} /> : <UserPlus size={16} />}
+                {busy ? 'Setting…' : !online ? 'Offline — reconnect to register' : 'Create folio'}
+                {!busy && online && <ArrowRight size={14} style={{ opacity: 0.7 }} />}
               </button>
             </form>
           ) : (
@@ -208,7 +242,8 @@ export default function Register() {
               </div>
               <div className="field">
                 <label htmlFor="verifyCode">Verification code</label>
-                <input id="verifyCode" className="input" placeholder="6-digit code" value={verifyCode} onChange={(e) => setVerifyCode(e.target.value)} style={{ letterSpacing: '0.2em', fontFamily: 'var(--font-mono)' }} required autoFocus />
+                <input id="verifyCode" className="input" placeholder="6-digit code" value={verifyCode} onChange={(e) => setVerifyCode(e.target.value.replace(/\D/g, '').slice(0, 8))} style={{ letterSpacing: '0.2em', fontFamily: 'var(--font-mono)' }} inputMode="numeric" autoComplete="one-time-code" autoFocus />
+                <FieldError hint="Digits only. Check spam if it has not arrived within a minute." />
               </div>
               <button className="btn btn-primary" style={{ width: '100%', marginTop: 6, borderRadius: 12, padding: '13px' }} disabled={busy}>
                 {busy ? <span className="spinner" /> : <ShieldCheck size={16} />}

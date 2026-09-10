@@ -1,23 +1,30 @@
 import React, { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
-import { FileText, Search, Download, ArrowUpRight } from 'lucide-react';
+import { FileText, Search, Download, ArrowUpRight, CloudOff } from 'lucide-react';
 import { api, fmtMoney, fmtDate, invoiceStatus } from '../api';
 import { useAutoRefresh } from '../useAutoSync';
-import { Badge, Empty, Loading, PageHead } from '../components/ui';
+import { Badge, Empty, Skeleton, ErrorState, PageHead, Pager, usePager, OfflineBar, useOnline } from '../components/ui';
 
 export default function Invoices() {
   const [invoices, setInvoices] = useState(null);
-  const [error, setError] = useState('');
+  const [error, setError] = useState(null);
   const [search, setSearch] = useState('');
   const [type, setType] = useState('');
   const [status, setStatus] = useState('');
+  const online = useOnline();
+  const pager = usePager(invoices || [], 25);
 
   const load = () => {
     const params = new URLSearchParams();
     if (search) params.set('search', search);
     if (type) params.set('type', type);
     if (status) params.set('overdue', 'yes');
-    api.get(`/data/invoices?${params.toString()}`).then((res) => { setInvoices(res.invoices); setError(''); }).catch((e) => { setInvoices([]); setError(e.message); });
+    api.get(`/data/invoices?${params.toString()}`)
+      .then((res) => { setInvoices(res.invoices); setError(null); })
+      .catch((e) => {
+        if (e.status === 404) { setInvoices([]); setError(null); } // no synced data yet = empty, not an error
+        else { setInvoices([]); setError(e); }
+      });
   };
 
   useEffect(() => { load(); }, []);
@@ -34,32 +41,53 @@ export default function Invoices() {
 
   return (
     <div>
-      <div style={{ display: 'flex', alignItems: 'baseline', gap: 12, marginBottom: 4 }}>
-        <h1 style={{ fontSize: 36 }}>Invoices</h1>
-        <span style={{ fontFamily: 'var(--font-editorial)', fontStyle: 'italic', color: 'var(--stone)', fontSize: 14 }}>{invoices ? `${invoices.length} folios` : ''}</span>
-      </div>
-      <p style={{ fontFamily: 'var(--font-editorial)', fontStyle: 'italic', color: 'var(--stone)', marginBottom: 20 }}>Every invoice pressed in the desktop atelier — sales and purchases, live.</p>
+      <PageHead
+        title="Invoices"
+        sub="Every invoice pressed in the desktop atelier — sales and purchases, live."
+      >
+        <span style={{ fontFamily: 'var(--font-mono)', fontSize: 11, letterSpacing: '0.12em', textTransform: 'uppercase', color: 'var(--stone-light)', border: '1px solid var(--line)', padding: '4px 10px', borderRadius: 999 }}>{invoices ? `${invoices.length} folios` : ''}</span>
+      </PageHead>
+
+      {!online && <OfflineBar />}
 
       <div style={{ display: 'flex', justifyContent: 'space-between', gap: 12, flexWrap: 'wrap', marginBottom: 16 }}>
         <div className="filter-bar" style={{ marginBottom: 0 }}>
           <div style={{ position: 'relative' }}>
             <Search size={14} style={{ position: 'absolute', left: 12, top: 13, color: 'var(--stone-light)' }} />
-            <input className="input" style={{ paddingLeft: 36, minWidth: 260, borderRadius: 999 }} placeholder="Search invoice or customer…" value={search} onChange={(e) => setSearch(e.target.value)} />
+            <input className="input" style={{ paddingLeft: 36, minWidth: 260, borderRadius: 12 }} placeholder="Search invoice or customer…" value={search} onChange={(e) => setSearch(e.target.value)} aria-label="Search invoices" />
           </div>
-          <select className="input" style={{ borderRadius: 999, minWidth: 140 }} value={type} onChange={(e) => setType(e.target.value)}>
+          <select className="input" style={{ borderRadius: 12, minWidth: 140 }} value={type} onChange={(e) => setType(e.target.value)} aria-label="Filter by type">
             <option value="">All types</option><option value="Sales">Sales</option><option value="Purchase">Purchase</option>
           </select>
-          <select className="input" style={{ borderRadius: 999, minWidth: 140 }} value={status} onChange={(e) => setStatus(e.target.value)}>
+          <select className="input" style={{ borderRadius: 12, minWidth: 140 }} value={status} onChange={(e) => setStatus(e.target.value)} aria-label="Filter by status">
             <option value="">All statuses</option><option value="yes">Overdue</option>
           </select>
         </div>
-        <button className="btn btn-ghost btn-sm" onClick={exportCsv} disabled={!invoices?.length} style={{ borderRadius: 999 }}>
+        <button className="btn btn-ghost btn-sm" onClick={exportCsv} disabled={!invoices?.length} style={{ borderRadius: 12 }}>
           <Download size={14} /> Export CSV
         </button>
       </div>
 
       <div className="card" style={{ overflow: 'hidden' }}>
-        {error ? <Empty icon={<FileText size={22} />} title="Couldn't load invoices" sub={error} /> : invoices === null ? <Loading /> : invoices.length === 0 ? <Empty icon={<FileText size={22} />} title="No folios found" sub="Try another search, or press invoices in the desktop atelier." /> : (
+        {error ? (
+          <ErrorState
+            icon={<CloudOff size={22} />}
+            title={api.isNetworkError(error) ? "Can't reach the server" : 'Invoices would not load'}
+            sub={error.message}
+            network={api.isNetworkError(error)}
+            onRetry={load}
+            backTo="/app"
+          />
+        ) : invoices === null ? (
+          <Skeleton variant="table" rows={8} />
+        ) : invoices.length === 0 ? (
+          <Empty
+            icon={<FileText size={22} />}
+            title={search || type || status ? 'No folios match' : 'No folios yet'}
+            sub={search || type || status ? 'Loosen the filters to see more of the book.' : 'Press invoices in the desktop atelier, or start a draft here and approve it there.'}
+            action={{ label: 'Compose a draft', to: '/app/invoices/new' }}
+          />
+        ) : (
           <div className="table-wrap">
             <table className="tbl">
               <thead>
@@ -75,7 +103,7 @@ export default function Invoices() {
                 </tr>
               </thead>
               <tbody>
-                {invoices.map((inv) => {
+                {pager.slice.map((inv) => {
                   const st = invoiceStatus(inv);
                   return (
                     <tr key={inv.id}>
@@ -95,9 +123,14 @@ export default function Invoices() {
           </div>
         )}
       </div>
-      <div style={{ marginTop: 12, fontFamily: 'var(--font-mono)', fontSize: 10, letterSpacing: '0.1em', textTransform: 'uppercase', color: 'var(--stone-light)', display: 'flex', gap: 16 }}>
-        <span>{invoices?.length || 0} invoices</span><span>·</span><span>Press any invoice to view its paper</span>
-      </div>
+      {!error && invoices !== null && (
+        <Pager page={pager.page} pages={pager.pages} total={pager.total} perPage={pager.perPage} setPage={pager.setPage} label="invoices" />
+      )}
+      {!error && invoices !== null && invoices.length > 0 && (
+        <div style={{ marginTop: 8, fontFamily: 'var(--font-mono)', fontSize: 10, letterSpacing: '0.1em', textTransform: 'uppercase', color: 'var(--stone-light)' }}>
+          Press any invoice to view its paper
+        </div>
+      )}
     </div>
   );
 }
