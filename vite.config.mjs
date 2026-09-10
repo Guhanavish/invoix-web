@@ -11,5 +11,18 @@ export default defineConfig({
   },
   build: {
     outDir: 'dist',
+    // Never ship source maps to production
+    sourcemap: false,
+    chunkSizeWarningLimit: 500,
+    rollupOptions: {
+      output: {
+        manualChunks: {
+          // React core split from app code so repeat visits stay cached
+          'react-vendor': ['react', 'react-dom', 'react-router-dom'],
+          // Charts only load on dashboard/reports routes
+          charts: ['recharts'],
+        },
+      },
+    },
   },
 });

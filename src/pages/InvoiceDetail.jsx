@@ -33,24 +33,29 @@ export default function InvoiceDetail() {
 
   return (
     <div>
-      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 12, marginBottom: 18, flexWrap: 'wrap' }}>
-        <Link to="/app/invoices" style={{ display: 'inline-flex', alignItems: 'center', gap: 6, color: 'var(--stone)', fontFamily: 'var(--font-mono)', fontSize: 11, letterSpacing: '0.1em', textTransform: 'uppercase', fontWeight: 600 }}>
+      <nav aria-label="Breadcrumb" style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 18, flexWrap: 'wrap', fontFamily: 'var(--font-mono)', fontSize: 11, letterSpacing: '0.1em', textTransform: 'uppercase', fontWeight: 600, color: 'var(--stone)' }}>
+        <Link to="/app" style={{ color: 'inherit' }}>Workspace</Link>
+        <span aria-hidden="true">/</span>
+        <Link to="/app/invoices" style={{ color: 'inherit' }}>Invoices</Link>
+        <span aria-hidden="true">/</span>
+        <span aria-current="page" style={{ color: 'var(--ink)' }}>{inv.invoice_no}</span>
+        <Link to="/app/invoices" style={{ display: 'inline-flex', alignItems: 'center', gap: 6, color: 'var(--stone)', marginLeft: 'auto' }}>
           <ArrowLeft size={13} /> Back to invoices
         </Link>
-        <div style={{ display: 'flex', gap: 8 }}>
-          <button className={`btn btn-sm ${view === 'paper' ? 'btn-primary' : 'btn-ghost'}`} onClick={() => setView('paper')} style={{ borderRadius: 999 }}>
-            <Eye size={13} /> Paper view
-          </button>
-          <button className={`btn btn-sm ${view === 'details' ? 'btn-primary' : 'btn-ghost'}`} onClick={() => setView('details')} style={{ borderRadius: 999 }}>
-            <FileText size={13} /> Details
-          </button>
-        </div>
+      </nav>
+      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'flex-end', gap: 8, marginBottom: 18, flexWrap: 'wrap' }}>
+        <button className={`btn btn-sm ${view === 'paper' ? 'btn-primary' : 'btn-ghost'}`} onClick={() => setView('paper')}>
+          <Eye size={13} /> Paper view
+        </button>
+        <button className={`btn btn-sm ${view === 'details' ? 'btn-primary' : 'btn-ghost'}`} onClick={() => setView('details')}>
+          <FileText size={13} /> Details
+        </button>
       </div>
 
       <div className="card detail-hero" style={{ marginBottom: 16 }}>
         <div>
           <div style={{ display: 'flex', alignItems: 'center', gap: 10, flexWrap: 'wrap' }}>
-            <h2>{inv.invoice_no}</h2>
+            <h1>{inv.invoice_no}</h1>
             <Badge status={st.key}>{st.label}</Badge>
             <Badge status={inv.type === 'Purchase' ? 'purchase' : 'sales'}>{inv.type}</Badge>
             <Badge status="neutral">{inv.supply_type || 'B2B'}</Badge>

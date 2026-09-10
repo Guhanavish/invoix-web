@@ -117,7 +117,7 @@ button { font-family: inherit; }
   justify-content: center;
   gap: 8px;
   border: 1px solid transparent;
-  border-radius: 999px;
+  border-radius: 12px;
   padding: 11px 22px;
   font-family: var(--font-body);
   font-size: 14px;
@@ -135,7 +135,7 @@ button { font-family: inherit; }
 .btn-oxide:hover:not(:disabled) { background: var(--oxide-dark); transform: translateY(-1px); box-shadow: 0 8px 20px rgba(196,90,60,0.25); }
 .btn-dark { background: var(--ink-2); color: #fff; }
 .btn-dark:hover:not(:disabled) { background: #000; transform: translateY(-1px); }
-.btn-ghost { background: transparent; color: var(--ink); border-color: var(--line-strong); border-radius: 999px; }
+.btn-ghost { background: transparent; color: var(--ink); border-color: var(--line-strong); border-radius: 12px; }
 .btn-ghost:hover:not(:disabled) { border-color: var(--ink); background: var(--paper-2); }
 .btn-ghost-light { background: rgba(253,252,248,0.08); color: var(--paper); border-color: rgba(253,252,248,0.2); backdrop-filter: blur(8px); }
 .btn-ghost-light:hover:not(:disabled) { background: rgba(253,252,248,0.14); border-color: rgba(253,252,248,0.35); }
@@ -577,7 +577,7 @@ select.input { cursor: pointer; }
 
 /* ---------- Detail hero — invoice masthead ---------- */
 .detail-hero { padding: 24px; display: flex; align-items: center; justify-content: space-between; gap: 16px; flex-wrap: wrap; background: #fff; border: 1px solid var(--line); border-radius: var(--radius); }
-.detail-hero h2 { font-family: var(--font-mono); font-size: 24px; font-weight: 700; letter-spacing: -0.03em; }
+.detail-hero h1, .detail-hero h2 { font-family: var(--font-mono); font-size: 24px; font-weight: 700; letter-spacing: -0.03em; }
 .detail-grid { display: grid; grid-template-columns: 1.6fr 1fr; gap: 16px; margin-top: 16px; align-items: start; }
 .dl { display: flex; justify-content: space-between; gap: 16px; padding: 10px 0; border-bottom: 1px dashed var(--line); font-size: 13px; }
 .dl:last-child { border-bottom: none; }

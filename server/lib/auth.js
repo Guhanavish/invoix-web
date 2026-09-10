@@ -53,11 +53,16 @@ async function findUser(userId) {
   return store.users[String(userId).toLowerCase()] || null;
 }
 
+const USER_ID_RE = /^[a-z0-9][a-z0-9._-]{1,31}$/i;
+
 async function createUser(userId, password, email) {
   const id = String(userId).trim().toLowerCase();
   if (!id) throw new Error('User id is required');
-  if (!password || String(password).length < 4) throw new Error('Password must be at least 4 characters');
-  if (!email || !String(email).includes('@')) throw new Error('A valid email address is required');
+  // Strict charset: user ids become storage keys/paths, so slashes, dots abuse
+  // and traversal sequences must never reach the filesystem or Blob/B2 keys.
+  if (!USER_ID_RE.test(id)) throw new Error('User id must be 2-32 characters: letters, numbers, dot, dash or underscore.');
+  if (!password || String(password).length < 4 || String(password).length > 128) throw new Error('Password must be 4-128 characters');
+  if (!email || !String(email).includes('@') || String(email).length > 320) throw new Error('A valid email address is required');
   if (await findUser(id)) throw new Error('User id already exists');
   if (await findUserByEmail(email)) throw new Error('That email is already registered to another account');
 

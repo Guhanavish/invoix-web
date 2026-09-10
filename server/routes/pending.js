@@ -32,15 +32,25 @@ router.post('/', asyncHandler(async (req, res) => {
   if (!customer || !customer.name || !String(customer.name).trim()) {
     return res.status(400).json({ success: false, error: 'Customer name is required' });
   }
-  if (!Array.isArray(items) || items.length === 0) {
-    return res.status(400).json({ success: false, error: 'At least one invoice item is required' });
+  if (!Array.isArray(items) || items.length === 0 || items.length > 200) {
+    return res.status(400).json({ success: false, error: 'Between 1 and 200 invoice items are required' });
   }
   for (const it of items) {
-    if (!it || !String(it.description || '').trim()) {
-      return res.status(400).json({ success: false, error: 'Every item needs a description' });
+    if (!it || !String(it.description || '').trim() || String(it.description).length > 500) {
+      return res.status(400).json({ success: false, error: 'Every item needs a description (max 500 characters)' });
     }
-    if (!(Number(it.quantity) > 0)) {
+    if (!(Number(it.quantity) > 0) || Number(it.quantity) > 1000000000) {
       return res.status(400).json({ success: false, error: 'Every item needs a quantity greater than zero' });
+    }
+    for (const k of ['hsn_code', 'unit', 'notes', 'terms']) {
+      if (it[k] !== undefined && String(it[k]).length > 500) {
+        return res.status(400).json({ success: false, error: 'Item field too long (max 500 characters)' });
+      }
+    }
+  }
+  for (const k of ['invoice_date', 'due_date', 'place_of_supply', 'notes', 'terms']) {
+    if (req.body[k] !== undefined && String(req.body[k]).length > 1000) {
+      return res.status(400).json({ success: false, error: 'Field too long (max 1000 characters)' });
     }
   }
 

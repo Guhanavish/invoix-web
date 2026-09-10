@@ -5,6 +5,7 @@ const { createUser, verifyUser, issueToken, findUser, loadUsers, saveUsers, find
 const { verifyGoogleIdToken } = require('../lib/google');
 const { sendMail } = require('../lib/email');
 const { requireAuth } = require('../middleware/auth');
+const { str, validUserId, validEmail, validOtp, validPassword, validIdToken } = require('../lib/validate');
 
 const router = express.Router();
 
@@ -22,10 +23,13 @@ function googleUserId(sub) {
 
 router.post('/register', asyncHandler(async (req, res) => {
   const { userId, password, email } = req.body || {};
-  if (!userId || !password) {
-    return res.status(400).json({ success: false, error: 'User id and password are required' });
+  if (!validUserId(userId)) {
+    return res.status(400).json({ success: false, error: 'User id must be 2-32 characters: letters, numbers, dot, dash or underscore.' });
   }
-  if (!email || !String(email).includes('@')) {
+  if (!validPassword(password)) {
+    return res.status(400).json({ success: false, error: 'Password must be 4-128 characters.' });
+  }
+  if (!validEmail(email)) {
     return res.status(400).json({ success: false, error: 'A valid email address is required' });
   }
   const existing = await findUser(id(userId));
@@ -63,7 +67,7 @@ router.post('/register', asyncHandler(async (req, res) => {
 
 router.post('/login', asyncHandler(async (req, res) => {
   const { userId, password } = req.body || {};
-  if (!userId || !password) {
+  if (typeof userId !== 'string' || userId.length < 1 || userId.length > 64 || typeof password !== 'string' || password.length < 1 || password.length > 128) {
     return res.status(400).json({ success: false, error: 'User id and password are required' });
   }
   if (!(await verifyUser(userId, password))) {
@@ -96,7 +100,7 @@ router.post('/login', asyncHandler(async (req, res) => {
 // Request a password-reset OTP. Uses the verified email on file.
 router.post('/forgot', asyncHandler(async (req, res) => {
   const { userId, email } = req.body || {};
-  if (!userId || !email || !String(email).includes('@')) {
+  if (typeof userId !== 'string' || userId.length > 64 || !validEmail(email)) {
     return res.status(400).json({ success: false, error: 'User id and email are required' });
   }
   const user = await findUser(id(userId));
@@ -118,8 +122,8 @@ router.post('/forgot', asyncHandler(async (req, res) => {
 // Verify OTP and set a new password.
 router.post('/reset', asyncHandler(async (req, res) => {
   const { userId, email, otp, newPassword } = req.body || {};
-  if (!userId || !otp || !newPassword) {
-    return res.status(400).json({ success: false, error: 'User id, OTP and new password are required' });
+  if (typeof userId !== 'string' || userId.length > 64 || !validOtp(otp) || !validPassword(newPassword)) {
+    return res.status(400).json({ success: false, error: 'User id, a valid OTP and a 4-128 character password are required' });
   }
   const user = await findUser(id(userId));
   const emailMatches = user && user.email && String(user.email).toLowerCase() === String(email || '').trim().toLowerCase();
@@ -142,7 +146,7 @@ router.post('/reset', asyncHandler(async (req, res) => {
 // auto-provisioned so "Sign in with Google" always succeeds for any Google user.
 router.post('/google', asyncHandler(async (req, res) => {
   const { id_token } = req.body || {};
-  if (!id_token) {
+  if (!validIdToken(id_token)) {
     return res.status(400).json({ success: false, error: 'Missing Google id_token' });
   }
 
@@ -236,28 +240,37 @@ router.post('/google', asyncHandler(async (req, res) => {
   });
 }));
 
-// Email verification — request a code to the user's registered email
+// Email verification — request a code to the user's registered email.
+// Always returns a generic message so the endpoint can't be used to
+// enumerate which user ids exist.
 router.post('/verify-email/request', asyncHandler(async (req, res) => {
   const { userId } = req.body || {};
-  if (!userId) return res.status(400).json({ success: false, error: 'User id is required' });
+  if (typeof userId !== 'string' || userId.length > 64) {
+    return res.json({ success: true, message: 'If the account exists, a verification code has been sent.' });
+  }
   const user = await findUser(id(userId));
-  if (!user) return res.status(404).json({ success: false, error: 'User not found' });
-  if (user.emailVerified) return res.json({ success: true, message: 'Email already verified' });
-  if (!user.email) return res.status(400).json({ success: false, error: 'No email on file' });
-  const code = await createEmailVerificationOtp(id(userId));
-  await sendMail({
-    to: user.email,
-    subject: 'Invoix — verify your email',
-    text: `Your verification code is ${code}. It expires in 10 minutes.`,
-    html: `<p>Your verification code is</p><h2 style="letter-spacing:4px">${code}</h2><p>It expires in 10 minutes.</p>`,
-  });
-  res.json({ success: true, message: 'Verification code sent to ' + user.email });
+  if (user && !user.emailVerified && user.email) {
+    try {
+      const code = await createEmailVerificationOtp(id(userId));
+      await sendMail({
+        to: user.email,
+        subject: 'Invoix — verify your email',
+        text: `Your verification code is ${code}. It expires in 10 minutes.`,
+        html: `<p>Your verification code is</p><h2 style="letter-spacing:4px">${code}</h2><p>It expires in 10 minutes.</p>`,
+      });
+    } catch (e) {
+      console.error('[auth/verify-email] send failed:', e.message);
+    }
+  }
+  res.json({ success: true, message: 'If the account exists, a verification code has been sent.' });
 }));
 
 // Email verification — confirm the code and mark verified
 router.post('/verify-email/confirm', asyncHandler(async (req, res) => {
   const { userId, code } = req.body || {};
-  if (!userId || !code) return res.status(400).json({ success: false, error: 'User id and code are required' });
+  if (typeof userId !== 'string' || userId.length > 64 || !validOtp(code)) {
+    return res.status(400).json({ success: false, error: 'User id and code are required' });
+  }
   try {
     await verifyEmailOtp(id(userId), code);
     const user = await findUser(id(userId));
@@ -297,13 +310,12 @@ router.post('/profile/request', requireAuth, asyncHandler(async (req, res) => {
   const allowed = ['name', 'phone', 'businessName', 'address', 'city', 'email'];
   const changes = {};
   for (const k of allowed) {
-    if (req.body[k] !== undefined && String(req.body[k]).trim() !== '') {
-      changes[k] = String(req.body[k]).trim();
-    }
+    const v = str(req.body[k], k === 'address' ? 500 : 120).trim();
+    if (v !== '') changes[k] = v;
   }
   if (Object.keys(changes).length === 0) return res.status(400).json({ success: false, error: 'No changes provided' });
   // If email is being changed, it will require re-verification
-  if (changes.email && !changes.email.includes('@')) return res.status(400).json({ success: false, error: 'Invalid email' });
+  if (changes.email && !validEmail(changes.email)) return res.status(400).json({ success: false, error: 'Invalid email' });
 
   const { createApproval } = require('../lib/approvals');
   const approval = await createApproval(req.userId, changes, user);

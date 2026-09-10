@@ -137,7 +137,10 @@ export default function Landing() {
             <div className="mock">
               <div className="mock-top">
                 <div className="mock-title">TAX INVOICE <span>· INV-2026/184</span></div>
-                <span style={{ fontFamily: 'var(--font-mono)', fontSize: 10, letterSpacing: '0.12em', color: '#9a9590', border: '1px solid rgba(253,252,248,0.15)', padding: '4px 8px', borderRadius: 999 }}>PAID</span>
+                <span style={{ display: 'flex', gap: 6 }}>
+                  <span style={{ fontFamily: 'var(--font-mono)', fontSize: 10, letterSpacing: '0.12em', color: '#9a9590', border: '1px solid rgba(253,252,248,0.15)', padding: '4px 8px', borderRadius: 6 }}>SAMPLE</span>
+                  <span style={{ fontFamily: 'var(--font-mono)', fontSize: 10, letterSpacing: '0.12em', color: '#9a9590', border: '1px solid rgba(253,252,248,0.15)', padding: '4px 8px', borderRadius: 6 }}>PAID</span>
+                </span>
               </div>
               <div className="mock-row"><span className="k">Bill to</span><span className="v">Mehta Fabrics · Surat</span></div>
               <div className="mock-row"><span className="k">GSTIN</span><span className="v">24AAACM1234M1Z9</span></div>
@@ -149,11 +152,11 @@ export default function Landing() {
             </div>
             <div className="float-chip chip-1">
               <span className="ico" style={{ color: 'var(--sage)' }}><CheckCircle2 size={16} /></span>
-              <div><div>Synced to web</div><small>2 min ago · Encrypted</small></div>
+              <div><div>Auto-sync to web</div><small>On every save · Encrypted</small></div>
             </div>
             <div className="float-chip chip-2">
               <span className="ico" style={{ color: 'var(--oxide)' }}><BarChart3 size={16} /></span>
-              <div><div>GSTR-1 ready</div><small>B2B · 12 invoices</small></div>
+              <div><div>GSTR-1 and 3B</div><small>B2B and B2C splits</small></div>
             </div>
           </div>
         </div>
@@ -242,19 +245,19 @@ export default function Landing() {
         </div>
       </section>
 
-      {/* Quote */}
+      {/* Built for the counter, not the boardroom */}
       <section style={{ padding: '56px 40px', maxWidth: 1200, margin: '0 auto' }}>
         <div style={{ display: 'grid', gridTemplateColumns: '1fr auto', gap: 24, alignItems: 'center', border: '1px solid var(--line)', borderRadius: 'var(--radius)', padding: 32, background: 'var(--paper-2)' }}>
           <div>
-            <Quote size={18} style={{ color: 'var(--oxide)', marginBottom: 12 }} />
-            <p style={{ fontFamily: 'var(--font-editorial)', fontStyle: 'italic', fontSize: 20, lineHeight: 1.5, color: 'var(--ink)' }}>
-              "I set invoices in the shop and check the ledger from home. The portal is my business, kept."
+            <span className="eyebrow" style={{ color: 'var(--oxide)' }}>Who this is for</span>
+            <p style={{ fontFamily: 'var(--font-editorial)', fontStyle: 'italic', fontSize: 20, lineHeight: 1.5, color: 'var(--ink)', marginTop: 8 }}>
+              Shop owners who bill at the counter and check the ledger from home. One Windows app for the work, one web page for the record.
             </p>
-            <div style={{ marginTop: 12, fontFamily: 'var(--font-mono)', fontSize: 11, letterSpacing: '0.12em', textTransform: 'uppercase', color: 'var(--stone)' }}>— Merchant, Surat · uses Invoix daily</div>
+            <div style={{ marginTop: 12, fontFamily: 'var(--font-mono)', fontSize: 11, letterSpacing: '0.12em', textTransform: 'uppercase', color: 'var(--stone)' }}>Textiles · Trading · Services across India</div>
           </div>
           <div style={{ display: 'flex', gap: 8 }}>
             <span className="badge badge-neutral">Offline-first</span>
-            <span className="badge badge-neutral">Encrypted</span>
+            <span className="badge badge-neutral">No subscription</span>
           </div>
         </div>
       </section>
@@ -358,12 +361,18 @@ export default function Landing() {
         <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
           <div className="brand-mark" style={{ width: 28, height: 28, borderRadius: 8 }}><Receipt size={14} /></div>
           <span style={{ fontFamily: 'var(--font-display)', fontWeight: 700, color: 'var(--ink)' }}>Invoix</span>
-          <span style={{ color: 'var(--line-strong)' }}>—</span>
+          <span style={{ color: 'var(--line-strong)' }}>-</span>
           <span>GST billing · Desktop + Web</span>
         </div>
-        <div style={{ display: 'flex', gap: 16 }}>
+        <nav style={{ display: 'flex', gap: 16, flexWrap: 'wrap', fontSize: 13 }} aria-label="Footer">
+          <a href="#features" style={{ color: 'var(--stone)' }}>Features</a>
+          <a href="#how" style={{ color: 'var(--stone)' }}>How it works</a>
+          <a href="#download" style={{ color: 'var(--stone)' }}>Download</a>
+          <Link to="/register" style={{ color: 'var(--stone)' }}>Create account</Link>
+          <Link to="/terms" style={{ color: 'var(--stone)' }}>Terms</Link>
+          <Link to="/privacy" style={{ color: 'var(--stone)' }}>Privacy</Link>
           <Link to="/login" style={{ color: 'var(--ink)', fontWeight: 600, borderBottom: '1px solid var(--line-strong)' }}>Sign in →</Link>
-        </div>
+        </nav>
       </footer>
     </div>
   );

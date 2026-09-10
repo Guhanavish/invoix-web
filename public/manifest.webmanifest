@@ -1,0 +1,13 @@
+{
+  "name": "Invoix — GST Billing",
+  "short_name": "Invoix",
+  "description": "Offline-first GST billing for Windows with a live web mirror: invoices, GSTR reports, ledger and PDFs.",
+  "start_url": "/",
+  "display": "browser",
+  "background_color": "#FDFCF8",
+  "theme_color": "#1A1A18",
+  "icons": [
+    { "src": "/favicon.svg", "sizes": "any", "type": "image/svg+xml" },
+    { "src": "/apple-touch-icon.png", "sizes": "180x180", "type": "image/png" }
+  ]
+}

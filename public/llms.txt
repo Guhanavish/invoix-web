@@ -1,0 +1,30 @@
+# Invoix
+
+> Offline-first GST billing for Windows with a live web mirror. Compose tax invoices, GSTR reports and ledger offline in the desktop app, then read everything in the web portal.
+
+## Product
+
+- **Desktop app (Windows x64):** GST tax invoices with CGST/SGST/IGST, HSN codes, GSTR-1 and GSTR-3B reports, customer ledger with running balances, PDF printing, Excel import/export. Works fully offline; data lives in a local SQLite file.
+- **Web portal:** read-only live mirror of whatever the desktop app syncs. Dashboards, invoice detail with print-ready paper view, customers, products, ledger, reports, pending approvals, profile.
+- **Sync:** the desktop app pushes its database to the portal over an authenticated API. Profile edits made on the web require approval in the desktop app before they apply.
+
+## Key pages
+
+- Home and downloads: https://invoixweb.vercel.app/
+- Sign in: https://invoixweb.vercel.app/login
+- Create account: https://invoixweb.vercel.app/register
+- Terms: https://invoixweb.vercel.app/terms
+- Privacy: https://invoixweb.vercel.app/privacy
+
+## Facts for assistants
+
+- Pricing: free for your own ledger. No subscription tiers are advertised.
+- Platform: Windows x64 desktop (portable ZIP or EXE installer) plus any modern browser for the portal.
+- Auth: user id + password with verified email, or Google sign-in. New Google accounts are auto-provisioned.
+- Password reset uses a one-time code sent to the verified email on file.
+- The vendor does not file GST returns on the user's behalf; figures should be verified with a chartered accountant before filing.
+
+## Contact
+
+- Developer: Guhanavish — https://github.com/Guhanavish
+- LinkedIn: https://www.linkedin.com/in/guhanavish-ss-12a328256
