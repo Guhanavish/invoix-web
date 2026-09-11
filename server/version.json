@@ -1,16 +1,16 @@
 {
-  "version": "1.0.2",
-  "notes": "Fixed sidebar and dark theme across the app, fixed update check connection fallback",
+  "version": "1.0.3",
+  "notes": "Portal login gate with remember-me, reliable OTP codes, redesigned code emails, cookie consent, spam honeypots, anonymous analytics",
   "mandatory": false,
-  "publishedAt": "2026-09-07T14:20:00.000Z",
+  "publishedAt": "2026-09-11T18:30:00.000Z",
   "zip": {
-    "name": "Invoix-v1.0.2.zip",
-    "size": 141115522,
-    "url": "/api/download/installer/Invoix-v1.0.2.zip"
+    "name": "Invoix-v1.0.3.zip",
+    "size": 141121834,
+    "url": "/api/download/installer/Invoix-v1.0.3.zip"
   },
   "exe": {
-    "name": "Invoix Setup 1.0.2.exe",
-    "size": 91639426,
-    "url": "/api/download/installer/Invoix%20Setup%201.0.2.exe"
+    "name": "Invoix Setup 1.0.3.exe",
+    "size": 91644169,
+    "url": "/api/download/installer/Invoix%20Setup%201.0.3.exe"
   }
 }
