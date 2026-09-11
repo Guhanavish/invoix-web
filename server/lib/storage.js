@@ -83,7 +83,9 @@ function mirrorToBlob(key, buffer, contentType) {
       }
       const { put } = blobLib();
       await withFlip(await accessMode(), async (access) => {
-        await put(key, buffer, { token: TOKEN, access, contentType, addRandomSuffix: false, allowOverwrite: true });
+        // cacheControlMaxAge: 0 keeps edge caches from serving stale JSON
+        // after overwrites (users/approvals/version must read fresh).
+        await put(key, buffer, { token: TOKEN, access, contentType, addRandomSuffix: false, allowOverwrite: true, cacheControlMaxAge: 0 });
       });
       blobUsageCache = { bytes: used + buffer.length, at: Date.now() };
     } catch (e) {
@@ -203,6 +205,8 @@ async function writeRaw(key, buffer, contentType = 'application/octet-stream') {
         contentType,
         addRandomSuffix: false,
         allowOverwrite: true,
+        // Fresh reads after overwrites matter more than edge caching here.
+        ...(contentType.includes('json') ? { cacheControlMaxAge: 0 } : {}),
       });
       if (!res || !res.url || res.pathname !== key) {
         throw new Error(`Write to storage failed for "${key}" (no blob returned by the API)`);
