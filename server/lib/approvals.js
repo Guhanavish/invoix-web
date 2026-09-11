@@ -14,14 +14,18 @@ async function loadApprovalsStore() {
   if (approvalsCache && now - approvalsCacheTime < APPROVALS_CACHE_TTL_MS) {
     return approvalsCache;
   }
-  const data = await storage.readJSON(APPROVALS_KEY);
-  const store = data && Array.isArray(data.approvals) ? data : { approvals: [] };
+  // Freshest __rev across tiers wins (same staleness class as users.json).
+  const { obj, rev } = await storage.loadVersionedJSON(APPROVALS_KEY, { approvals: [] });
+  const store = obj && Array.isArray(obj.approvals) ? obj : { approvals: [] };
+  store.__rev = rev;
   approvalsCache = store;
   approvalsCacheTime = now;
   return store;
 }
 
 async function saveApprovalsStore(store) {
+  const rev = Date.now();
+  store.__rev = rev > (store.__rev || 0) ? rev : (store.__rev || 0) + 1;
   approvalsCache = store;
   approvalsCacheTime = Date.now();
   await storage.writeJSON(APPROVALS_KEY, store);

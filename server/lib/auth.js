@@ -12,16 +12,23 @@ let usersCache = null;
 let usersCacheTime = 0;
 const USERS_CACHE_TTL_MS = 30000;
 
+function sleep(ms) {
+  return new Promise((r) => setTimeout(r, ms));
+}
+
 async function loadUsers() {
   const now = Date.now();
   // Use cache if fresh
   if (usersCache && now - usersCacheTime < USERS_CACHE_TTL_MS) {
     return usersCache;
   }
-  const data = await storage.readJSON(USERS_KEY);
-  const store = data && data.users ? data : { users: {} };
+  // Freshest __rev across tiers wins (never trust a stale preferred tier).
+  const { obj, rev } = await storage.loadVersionedJSON(USERS_KEY, { users: {} });
+  const store = obj && obj.users ? obj : { users: {} };
+  store.__rev = rev;
   // Ensure every user has emailVerified field (migration for old accounts)
   for (const k of Object.keys(store.users)) {
+    if (k === '__rev') continue;
     if (store.users[k].emailVerified === undefined) {
       // Google accounts are implicitly verified via Google
       store.users[k].emailVerified = store.users[k].google ? true : false;
@@ -33,6 +40,9 @@ async function loadUsers() {
 }
 
 async function saveUsers(store) {
+  // Monotonic revision so every tier can tell old copies from new ones.
+  const rev = Date.now();
+  store.__rev = rev > (store.__rev || 0) ? rev : (store.__rev || 0) + 1;
   // Update cache immediately to prevent stale reads in same instance
   usersCache = store;
   usersCacheTime = Date.now();
@@ -58,8 +68,19 @@ function hashPassword(password, salt) {
 }
 
 async function findUser(userId) {
-  const store = await loadUsers();
-  return store.users[String(userId).toLowerCase()] || null;
+  const id = String(userId).toLowerCase();
+  let store = await loadUsers();
+  if (store.users[id]) return store.users[id];
+  // The account may have been created milliseconds ago on another instance
+  // (register-then-login, resend-then-verify). Storage overwrites can lag
+  // behind reads, so retry fresh twice before reporting "not found".
+  for (let i = 0; i < 2; i++) {
+    await sleep(700);
+    invalidateUsersCache();
+    store = await loadUsers();
+    if (store.users[id]) return store.users[id];
+  }
+  return null;
 }
 
 const USER_ID_RE = /^[a-z0-9][a-z0-9._-]{1,31}$/i;

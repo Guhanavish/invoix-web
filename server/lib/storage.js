@@ -260,4 +260,56 @@ async function writeJSON(key, obj) {
   await writeRaw(key, Buffer.from(JSON.stringify(obj, null, 2), 'utf8'), 'application/json');
 }
 
-module.exports = { readRaw, writeRaw, readJSON, writeJSON, del, exists, USE_BLOB, accessMode, withFlip, storageStatus, blobUsageBytes, BLOB_CAP_BYTES, mirrorToBlob };
+// Parallel read of every tier. Used by versioned stores (users/approvals) to
+// pick the freshest copy instead of trusting tier preference order — Blob/B2
+// overwrites can lag behind reads, and a stale preferred tier must never win
+// over a fresher fallback (that silently resurrects deleted users or hides
+// just-created ones).
+async function readTieredRaw(key) {
+  const out = { b2: null, blob: null, local: null };
+  const jobs = [];
+  if (useB2()) {
+    jobs.push(
+      b2Lib().b2Read(key).then((b) => { out.b2 = b; }).catch(() => {})
+    );
+  }
+  if (USE_BLOB) {
+    jobs.push(
+      readBlobRaw(key).then((b) => { out.blob = b; }).catch(() => { out.blob = null; })
+    );
+  }
+  jobs.push((async () => {
+    try {
+      const f = localFile(key);
+      out.local = fs.existsSync(f) ? fs.readFileSync(f) : null;
+    } catch (e) { out.local = null; }
+  })());
+  await Promise.all(jobs);
+  return out;
+}
+
+function parseRev(buf) {
+  if (!buf) return { rev: -1, obj: null };
+  try {
+    const obj = JSON.parse(buf.toString('utf8'));
+    const rev = obj && typeof obj.__rev === 'number' ? obj.__rev : 0;
+    return { rev, obj };
+  } catch (e) {
+    return { rev: -1, obj: null };
+  }
+}
+
+// Load a versioned JSON doc (users/approvals): freshest __rev across tiers
+// wins. Returns { obj, rev } with obj possibly an empty shell.
+async function loadVersionedJSON(key, emptyShell) {
+  const tiers = await readTieredRaw(key);
+  let best = { rev: -1, obj: null };
+  for (const buf of [tiers.b2, tiers.blob, tiers.local]) {
+    const parsed = parseRev(buf);
+    if (parsed.obj && parsed.rev > best.rev) best = parsed;
+  }
+  if (!best.obj) best = { rev: 0, obj: JSON.parse(JSON.stringify(emptyShell)) };
+  return best;
+}
+
+module.exports = { readRaw, writeRaw, readJSON, writeJSON, del, exists, USE_BLOB, accessMode, withFlip, storageStatus, blobUsageBytes, BLOB_CAP_BYTES, mirrorToBlob, readTieredRaw, parseRev, loadVersionedJSON };
