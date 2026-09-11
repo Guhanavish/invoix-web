@@ -3,7 +3,7 @@
 const express = require('express');
 const { createUser, verifyUser, issueToken, findUser, loadUsers, saveUsers, findUserByEmail, setUserEmail, setUserPassword, createOtp, verifyOtp, createEmailVerificationOtp, verifyEmailOtp } = require('../lib/auth');
 const { verifyGoogleIdToken } = require('../lib/google');
-const { sendMail } = require('../lib/email');
+const { sendMail, otpEmail } = require('../lib/email');
 const { requireAuth } = require('../middleware/auth');
 const { str, validUserId, validEmail, validOtp, validPassword, validIdToken } = require('../lib/validate');
 
@@ -22,7 +22,11 @@ function googleUserId(sub) {
 }
 
 router.post('/register', asyncHandler(async (req, res) => {
-  const { userId, password, email } = req.body || {};
+  const { userId, password, email, website } = req.body || {};
+  if (website) {
+    // Honeypot filled: pretend everything worked, create nothing.
+    return res.json({ success: true, userId: 'bot', requiresVerification: true, verificationSent: true, message: 'Account created. Verification code sent to your email.' });
+  }
   if (!validUserId(userId)) {
     return res.status(400).json({ success: false, error: 'User id must be 2-32 characters: letters, numbers, dot, dash or underscore.' });
   }
@@ -42,12 +46,8 @@ router.post('/register', asyncHandler(async (req, res) => {
     let verificationSent = false;
     try {
       const code = await createEmailVerificationOtp(id(userId));
-      await sendMail({
-        to: String(email).trim().toLowerCase(),
-        subject: 'Invoix — verify your email',
-        text: `Your verification code is ${code}. It expires in 10 minutes.`,
-        html: `<p>Welcome to Invoix! Your verification code is</p><h2 style="letter-spacing:4px">${code}</h2><p>It expires in 10 minutes.</p>`,
-      });
+      const mail = otpEmail({ code, kind: 'verify', userId: id(userId) });
+      await sendMail({ to: String(email).trim().toLowerCase(), ...mail });
       verificationSent = true;
     } catch (e) {
       console.error('[auth/register] verification mail failed:', e.message);
@@ -66,7 +66,11 @@ router.post('/register', asyncHandler(async (req, res) => {
 }));
 
 router.post('/login', asyncHandler(async (req, res) => {
-  const { userId, password } = req.body || {};
+  const { userId, password, website } = req.body || {};
+  if (website) {
+    // Honeypot filled: generic failure, same shape as bad credentials.
+    return res.status(401).json({ success: false, error: 'Invalid user id or password' });
+  }
   if (typeof userId !== 'string' || userId.length < 1 || userId.length > 64 || typeof password !== 'string' || password.length < 1 || password.length > 128) {
     return res.status(400).json({ success: false, error: 'User id and password are required' });
   }
@@ -99,9 +103,13 @@ router.post('/login', asyncHandler(async (req, res) => {
 
 // Request a password-reset OTP. Uses the verified email on file.
 router.post('/forgot', asyncHandler(async (req, res) => {
-  const { userId, email } = req.body || {};
+  const { userId, email, website } = req.body || {};
   if (typeof userId !== 'string' || userId.length > 64 || !validEmail(email)) {
     return res.status(400).json({ success: false, error: 'User id and email are required' });
+  }
+  if (website) {
+    // Honeypot filled: generic success, send nothing.
+    return res.json({ success: true, message: 'If the user id and verified email match, an OTP has been sent.' });
   }
   const user = await findUser(id(userId));
   const emailMatches = user && user.email && String(user.email).toLowerCase() === String(email).trim().toLowerCase();
@@ -110,12 +118,8 @@ router.post('/forgot', asyncHandler(async (req, res) => {
     return res.json({ success: true, message: 'If the user id and verified email match, an OTP has been sent.' });
   }
   const code = await createOtp(user.userId || id(userId));
-  await sendMail({
-    to: String(email).trim(),
-    subject: 'Invoix password reset OTP',
-    text: `Your Invoix password reset code is ${code}. It expires in 10 minutes. If you did not request this, ignore this email.`,
-    html: `<p>Your Invoix password reset code is</p><h2 style="letter-spacing:4px">${code}</h2><p>It expires in 10 minutes. If you did not request this, you can ignore this email.</p>`,
-  });
+  const mail = otpEmail({ code, kind: 'reset', userId: id(userId) });
+  await sendMail({ to: String(email).trim(), ...mail });
   res.json({ success: true, message: 'If the user id and verified email match, an OTP has been sent.' });
 }));
 
@@ -252,12 +256,8 @@ router.post('/verify-email/request', asyncHandler(async (req, res) => {
   if (user && !user.emailVerified && user.email) {
     try {
       const code = await createEmailVerificationOtp(id(userId));
-      await sendMail({
-        to: user.email,
-        subject: 'Invoix — verify your email',
-        text: `Your verification code is ${code}. It expires in 10 minutes.`,
-        html: `<p>Your verification code is</p><h2 style="letter-spacing:4px">${code}</h2><p>It expires in 10 minutes.</p>`,
-      });
+      const mail = otpEmail({ code, kind: 'verify', userId: id(userId) });
+      await sendMail({ to: user.email, ...mail });
     } catch (e) {
       console.error('[auth/verify-email] send failed:', e.message);
     }

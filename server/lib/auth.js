@@ -44,6 +44,15 @@ function invalidateUsersCache() {
   usersCacheTime = 0;
 }
 
+// OTP paths must never trust the 30s instance cache: on serverless, the
+// request that created the code and the request that verifies it routinely
+// land on different instances, so a cached read returns "no OTP pending".
+// Always re-read straight from storage here.
+async function loadUsersFresh() {
+  invalidateUsersCache();
+  return loadUsers();
+}
+
 function hashPassword(password, salt) {
   return crypto.scryptSync(String(password), salt, 64).toString('hex');
 }
@@ -116,11 +125,17 @@ async function setUserPassword(userId, password) {
 
 async function createEmailVerificationOtp(userId) {
   const id = String(userId).toLowerCase();
-  const store = await loadUsers();
+  const store = await loadUsersFresh();
   const user = store.users[id];
   if (!user) throw new Error('User not found');
   if (!user.email) throw new Error('No email address on this account');
   if (user.emailVerified) throw new Error('Email is already verified');
+  // Resend friendliness: if a live code already exists, re-send the SAME code
+  // instead of killing the one sitting in the user's inbox.
+  const live = user.emailVerificationOtp;
+  if (live && live.exp > Date.now() && (live.attempts || 0) <= OTP_MAX_ATTEMPTS) {
+    return live.code;
+  }
   const code = generateOtp();
   user.emailVerificationOtp = {
     code,
@@ -133,7 +148,7 @@ async function createEmailVerificationOtp(userId) {
 
 async function verifyEmailOtp(userId, code) {
   const id = String(userId).toLowerCase();
-  const store = await loadUsers();
+  const store = await loadUsersFresh();
   const user = store.users[id];
   if (!user) throw new Error('User not found');
   if (user.emailVerified) return true;
@@ -150,7 +165,7 @@ async function verifyEmailOtp(userId, code) {
     await saveUsers(store);
     throw new Error('Code has expired. Request a new one.');
   }
-  if (String(code) !== String(otp.code)) {
+  if (String(code).trim() !== String(otp.code)) {
     await saveUsers(store);
     throw new Error('Invalid code');
   }
@@ -200,10 +215,15 @@ function generateOtp() {
 
 async function createOtp(userId) {
   const id = String(userId).toLowerCase();
-  const store = await loadUsers();
+  const store = await loadUsersFresh();
   const user = store.users[id];
   if (!user) throw new Error('User not found');
   if (!user.email) throw new Error('No email address on this account');
+  // Resend friendliness: re-send the SAME live code instead of killing the
+  // one sitting in the user's inbox.
+  if (user.otp && user.otp.exp > Date.now() && (user.otp.attempts || 0) <= OTP_MAX_ATTEMPTS) {
+    return user.otp.code;
+  }
   user.otp = {
     code: generateOtp(),
     exp: Date.now() + OTP_TTL_MS,
@@ -215,7 +235,7 @@ async function createOtp(userId) {
 
 async function verifyOtp(userId, code) {
   const id = String(userId).toLowerCase();
-  const store = await loadUsers();
+  const store = await loadUsersFresh();
   const user = store.users[id];
   if (!user || !user.otp) throw new Error('No OTP pending for this account');
   const otp = user.otp;
@@ -230,7 +250,7 @@ async function verifyOtp(userId, code) {
     await saveUsers(store);
     throw new Error('OTP has expired. Request a new one.');
   }
-  if (String(code) !== String(otp.code)) {
+  if (String(code).trim() !== String(otp.code)) {
     await saveUsers(store);
     throw new Error('Invalid OTP');
   }

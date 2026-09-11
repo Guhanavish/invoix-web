@@ -72,13 +72,15 @@ function createApp() {
   });
 
   app.use('/api/', apiLimiter);
-  // Tight brakes on auth + OTP/email-sending routes
+  // Tight brakes on auth + OTP/email-sending routes.
+  // NOTE: confirm/reset endpoints are intentionally NOT rate-limited here:
+  // they already cap attempts per code (5 tries then the code dies), and
+  // throttling them locks legitimate users out mid-recovery.
   app.use('/api/auth/login', authLimiter);
   app.use('/api/auth/register', authLimiter);
   app.use('/api/auth/google', authLimiter);
   app.use('/api/auth/forgot', otpLimiter);
-  app.use('/api/auth/reset', otpLimiter);
-  app.use('/api/auth/verify-email', otpLimiter);
+  app.use('/api/auth/verify-email/request', otpLimiter);
 
   app.use('/api/auth', require('./routes/auth'));
   app.use('/api/sync', require('./routes/sync'));
@@ -87,6 +89,7 @@ function createApp() {
   app.use('/api/approvals', require('./routes/approvals'));
   app.use('/api/download', require('./routes/download'));
   app.use('/api/version', require('./routes/version'));
+  app.use('/api/analytics', require('./routes/analytics'));
   app.use('/api/config', require('./routes/config'));
 
   if (fs.existsSync(WEB_DIR)) {

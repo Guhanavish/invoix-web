@@ -47,9 +47,12 @@ export default function Privacy() {
           <p>You may review your profile in the workspace, request corrections through profile approvals, stop syncing at any time, and ask for deletion of your web account and synced data by writing to the developer through the profiles linked on the <Link to="/#profile" style={{ color: 'var(--ink)', fontWeight: 600 }}>home page</Link>.</p>
         </Section>
         <Section n="7" title="Cookies and local storage">
-          <p>The portal keeps your session token and profile in your browsers local storage so you stay signed in. No advertising or tracking cookies are used.</p>
+          <p>The portal keeps your session token and profile in your browsers local storage so you stay signed in. If you use Google sign-in, Google loads its own scripts, which may set Google cookies — you can decline those in the cookie notice and sign in with a user id instead. No advertising or tracking cookies are used by Invoix itself.</p>
         </Section>
-        <Section n="8" title="Changes">
+        <Section n="8" title="Anonymous usage counts">
+          <p>Only after you accept cookies, the portal counts anonymous page views and a few key actions (account creation, draft creation, installer downloads) to understand what is used. Counts hold no names, emails, addresses or identifiers, are kept for 90 days, and are never sold or shared.</p>
+        </Section>
+        <Section n="9" title="Changes">
           <p>Material changes to this policy will be noted here with a new date. Continued use after changes means acceptance.</p>
         </Section>
       </div>

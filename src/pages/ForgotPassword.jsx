@@ -16,6 +16,7 @@ export default function ForgotPassword() {
   const [confirm, setConfirm] = useState('');
   const [step, setStep] = useState(1);
   const [touched, setTouched] = useState({});
+  const [honey, setHoney] = useState('');
   const [error, setError] = useState('');
   const [ok, setOk] = useState('');
   const [busy, setBusy] = useState(false);
@@ -48,7 +49,7 @@ export default function ForgotPassword() {
     if (!stepValid || !online) return;
     setBusy(true);
     try {
-      const res = await api.forgotPassword(userId.trim(), email.trim());
+      const res = await api.post('/auth/forgot', { userId: userId.trim(), email: email.trim(), website: honey || undefined });
       setOk(res.message || 'Code sent to your email.');
       setStep(2);
     } catch (err) {
@@ -116,6 +117,9 @@ export default function ForgotPassword() {
           {step === 1 ? (
             <form onSubmit={sendOtp} noValidate>
               <OfflineBar />
+              <div aria-hidden="true" style={{ position: 'absolute', left: '-9999px', top: 'auto', width: 1, height: 1, overflow: 'hidden' }}>
+                <label>Website<input type="text" name="website" value={honey} onChange={(e) => setHoney(e.target.value)} tabIndex={-1} autoComplete="off" /></label>
+              </div>
               <div className="field">
                 <label htmlFor="fpUserId">User ID</label>
                 <input

@@ -21,6 +21,7 @@ export default function Login() {
   const [googleBusy, setGoogleBusy] = useState(false);
   const [needVerify, setNeedVerify] = useState(null);
   const [verifyCode, setVerifyCode] = useState('');
+  const [honey, setHoney] = useState('');
 
   const expired = params.get('expired') === '1';
   const nextParam = params.get('next');
@@ -57,7 +58,7 @@ export default function Login() {
     setError(''); setOk('');
     setBusy(true);
     try {
-      const res = await api.post('/auth/login', { userId: userId.trim(), password });
+      const res = await api.post('/auth/login', { userId: userId.trim(), password, website: honey || undefined });
       api.setSession(res.token, res.user);
       navigate(destination(), { replace: true });
     } catch (err) {
@@ -138,6 +139,9 @@ export default function Login() {
           {!needVerify ? (
             <form onSubmit={submit} noValidate>
               <OfflineBar />
+              <div aria-hidden="true" style={{ position: 'absolute', left: '-9999px', top: 'auto', width: 1, height: 1, overflow: 'hidden' }}>
+                <label>Website<input type="text" name="website" value={honey} onChange={(e) => setHoney(e.target.value)} tabIndex={-1} autoComplete="off" /></label>
+              </div>
               <GoogleButton
                 onSuccess={onGoogleSuccess}
                 onError={onGoogleError}

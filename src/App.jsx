@@ -2,6 +2,7 @@ import React, { Suspense, lazy } from 'react';
 import { Routes, Route, Navigate, useLocation } from 'react-router-dom';
 import { api } from './api';
 import { usePageMeta } from './routeMeta';
+import CookieConsent from './components/CookieConsent';
 
 const Layout = lazy(() => import('./components/Layout'));
 const Landing = lazy(() => import('./pages/Landing'));
@@ -45,6 +46,7 @@ export default function App() {
   return (
     <Suspense fallback={<PageFallback />}>
       <Meta />
+      <CookieConsent />
       <Routes>
         <Route path="/" element={<Landing />} />
         <Route path="/login" element={<Login />} />

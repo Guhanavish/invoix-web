@@ -1,5 +1,6 @@
 import React, { useEffect, useRef, useState } from 'react';
 import { api, getConfig } from '../api';
+import { useConsent } from './CookieConsent';
 
 // Loads the Google Identity Services script once.
 let gsiScriptPromise = null;
@@ -24,6 +25,8 @@ export default function GoogleButton({ onSuccess, onError, onBusyChange, label =
   const [failed, setFailed] = useState(false);
   const [errorDetail, setErrorDetail] = useState('');
   const [busy, setBusy] = useState(false);
+  const consent = useConsent();
+  const declined = consent === 'declined';
 
   useEffect(() => {
     let active = true;
@@ -38,8 +41,9 @@ export default function GoogleButton({ onSuccess, onError, onBusyChange, label =
   }, [clientId]);
 
   // Wire up the GIS button once we have a client id and the DOM node.
+  // Google scripts only load when third-party cookies were not declined.
   useEffect(() => {
-    if (!clientId || !btnRef.current) return;
+    if (!clientId || !btnRef.current || declined) return;
     let active = true;
     setFailed(false);
     setErrorDetail('');
@@ -86,7 +90,18 @@ export default function GoogleButton({ onSuccess, onError, onBusyChange, label =
         setErrorDetail(e && e.message ? e.message : 'Could not load https://accounts.google.com/gsi/client — check network or adblocker.');
       });
     return () => { active = false; };
-  }, [clientId, onSuccess, onError]);
+  }, [clientId, declined, onSuccess, onError]);
+
+  if (declined) {
+    return (
+      <div className="google-unavailable">
+        <div className="google-unavailable-title">Google sign-in is off for you.</div>
+        <div className="google-unavailable-sub">
+          You declined third-party cookies, so Google scripts are not loaded. Sign in with a user id and password below instead.
+        </div>
+      </div>
+    );
+  }
 
   if (!clientId) {
     return (

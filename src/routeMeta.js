@@ -50,8 +50,37 @@ function setTag(selector, attr, value) {
   el.setAttribute(attr, value);
 }
 
+// Fire-and-forget anonymous pageview (no cookies, no PII, path only).
+// Skipped until the visitor accepts cookies, honouring a decline.
+export function trackPage(pathname) {
+  try {
+    if (localStorage.getItem('cookie-consent') !== 'accepted') return;
+    fetch('/api/analytics/event', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ type: 'pageview', path: pathname }),
+      keepalive: true,
+    }).catch(() => {});
+  } catch {}
+}
+
+export function trackEvent(type) {
+  try {
+    if (localStorage.getItem('cookie-consent') !== 'accepted') return;
+    fetch('/api/analytics/event', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ type }),
+      keepalive: true,
+    }).catch(() => {});
+  } catch {}
+}
+
 export function usePageMeta() {
   const { pathname } = useLocation();
+  useEffect(() => {
+    trackPage(pathname);
+  }, [pathname]);
   useEffect(() => {
     const key = META[pathname] ? pathname : pathname.startsWith('/app') ? '/app' : '/404';
     const m = META[key];

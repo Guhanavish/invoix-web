@@ -23,6 +23,7 @@ export default function Register() {
   const [needsVerify, setNeedsVerify] = useState(false);
   const [verifyUserId, setVerifyUserId] = useState('');
   const [verifyCode, setVerifyCode] = useState('');
+  const [honey, setHoney] = useState('');
 
   const onGoogleSuccess = () => navigate('/app', { replace: true });
   const onGoogleError = (err) => {
@@ -61,7 +62,7 @@ export default function Register() {
     if (!formValid || !online) return;
     setBusy(true);
     try {
-      const res = await api.post('/auth/register', { userId, password, email });
+      const res = await api.post('/auth/register', { userId, password, email, website: honey || undefined });
       if (res.requiresVerification) {
         setOk(res.message || `Account created. Code sent to ${email}. Enter it below.`);
         setNeedsVerify(true);
@@ -107,6 +108,10 @@ export default function Register() {
       const res = await api.confirmEmailVerification(verifyUserId, verifyCode);
       api.setSession(res.token, res.user);
       setOk('Email verified! Opening folio…');
+      try {
+        const { trackEvent } = await import('../routeMeta');
+        trackEvent('register');
+      } catch {}
       setTimeout(() => navigate('/app', { replace: true }), 600);
     } catch (err) {
       setError(err.message);
@@ -162,6 +167,9 @@ export default function Register() {
           {!needsVerify ? (
             <form onSubmit={submit} noValidate>
               <OfflineBar />
+              <div aria-hidden="true" style={{ position: 'absolute', left: '-9999px', top: 'auto', width: 1, height: 1, overflow: 'hidden' }}>
+                <label>Website<input type="text" name="website" value={honey} onChange={(e) => setHoney(e.target.value)} tabIndex={-1} autoComplete="off" /></label>
+              </div>
               <GoogleButton
                 onSuccess={onGoogleSuccess}
                 onError={onGoogleError}

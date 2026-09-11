@@ -46,6 +46,18 @@ export default function Landing() {
   const zipUrl = zipFile ? `/api/download/installer/${encodeURIComponent(zipFile.name)}` : `/api/download/installer/${ZIP_NAME}`;
   const exeUrl = exeFile ? `/api/download/installer/${encodeURIComponent(exeFile.name)}` : `/api/download/installer/${EXE_NAME}`;
 
+  const trackDownload = () => {
+    try {
+      if (localStorage.getItem('cookie-consent') !== 'accepted') return;
+      fetch('/api/analytics/event', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ type: 'installer_download' }),
+        keepalive: true,
+      }).catch(() => {});
+    } catch {}
+  };
+
   return (
     <div style={{ background: 'var(--paper)' }}>
       <nav className={`land-nav ${scrolled ? 'scrolled' : 'dark'}`}>
@@ -79,13 +91,13 @@ export default function Landing() {
               appears here — typeset, balanced, and ready to present. No exports. No drift.
             </p>
             <div className="hero-cta" style={{ flexWrap: 'wrap' }}>
-              <a className="btn btn-oxide btn-lg" href={zipUrl} download={zipFile ? zipFile.name : ZIP_NAME}>
+              <a className="btn btn-oxide btn-lg" href={zipUrl} download={zipFile ? zipFile.name : ZIP_NAME} onClick={trackDownload}>
                 <Package size={18} />
                 Download portable
               </a>
-              <Link className="btn btn-ghost btn-lg" to="/login">
-                Open workspace
-                <ArrowRight size={16} />
+              <Link to="/login" style={{ display: 'inline-flex', alignItems: 'center', gap: 6, fontSize: 14, fontWeight: 600, color: 'var(--ink)', borderBottom: '1px solid var(--line-strong)', paddingBottom: 2 }}>
+                Already set up? Open workspace
+                <ArrowRight size={14} style={{ opacity: 0.7 }} />
               </Link>
             </div>
             <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginTop: 10, fontSize: 13, color: '#9a9590', fontFamily: 'var(--font-mono)' }}>
@@ -279,7 +291,7 @@ export default function Landing() {
             </div>
 
             <div style={{ display: 'flex', flexDirection: 'column', gap: 12, marginTop: 8 }}>
-              <a className="btn btn-oxide btn-lg" href={zipUrl} download={zipFile ? zipFile.name : ZIP_NAME} style={{ justifyContent: 'center' }}>
+              <a className="btn btn-oxide btn-lg" href={zipUrl} download={zipFile ? zipFile.name : ZIP_NAME} style={{ justifyContent: 'center' }} onClick={trackDownload}>
                 <Package size={18} />
                 Download portable — ZIP {zipFile ? `· ${fmtBytes(zipFile.size)}` : ''}
               </a>

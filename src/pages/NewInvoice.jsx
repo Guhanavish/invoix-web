@@ -111,6 +111,10 @@ export default function NewInvoice() {
       };
       const res = await api.createPendingInvoice(payload);
       setBusy(false);
+      try {
+        const { trackEvent } = await import('../routeMeta');
+        trackEvent('draft_created');
+      } catch {}
       setDone({
         id: res.pending?.id || '',
         customer: customer.name.trim(),
