@@ -1,12 +1,7 @@
 'use strict';
 
 const express = require('express');
-const path = require('path');
 const { getVersionInfo, isNewer } = require('../lib/update');
-
-const TOKEN = process.env.BLOB_READ_WRITE_TOKEN;
-const USE_BLOB = !!TOKEN;
-const BLOB_PREFIX = 'downloads/';
 
 const router = express.Router();
 
@@ -14,46 +9,38 @@ function asyncHandler(fn) {
   return (req, res, next) => Promise.resolve(fn(req, res, next)).catch(next);
 }
 
-async function listBlobs() {
-  const { list } = require('@vercel/blob');
-  const { withFlip } = require('../lib/storage');
-  const { accessMode } = require('../lib/storage');
-  const res = await withFlip(await accessMode(), (access) =>
-    list({ token: TOKEN, prefix: BLOB_PREFIX, limit: 1000 })
-  );
-  return res.blobs || [];
+// Newest actually-stored files across ALL tiers (B2 + Blob + local).
+// version.json stays the source of truth for the release itself; the union
+// below only fills gaps and can never downgrade a published file entry.
+async function newestStoredFiles() {
+  try {
+    const { listInstallers } = require('./download');
+    const all = await listInstallers();
+    const pick = (re) => all.filter((f) => re.test(f.name)).sort((a, b) => new Date(b.modified) - new Date(a.modified))[0] || null;
+    const zip = pick(/\.zip$/i);
+    const exe = pick(/\.exe$/i);
+    return {
+      zip: zip ? { name: zip.name, size: zip.size, url: `/api/download/installer/${encodeURIComponent(zip.name)}` } : null,
+      exe: exe ? { name: exe.name, size: exe.size, url: `/api/download/installer/${encodeURIComponent(exe.name)}` } : null,
+    };
+  } catch (e) {
+    return { zip: null, exe: null };
+  }
+}
+
+// Prefer the published manifest; only fill entries the manifest lacks.
+function withManifestFallback(manifestFiles, stored) {
+  return {
+    zip: manifestFiles.zip || stored.zip,
+    exe: manifestFiles.exe || stored.exe,
+  };
 }
 
 // Public: full release info for the landing page + desktop updater
 router.get('/', asyncHandler(async (req, res) => {
   const info = await getVersionInfo();
-  const files = { zip: info.zip || null, exe: info.exe || null };
-
-  if (USE_BLOB) {
-    try {
-      const blobs = await listBlobs();
-      const zipB = blobs.filter((b) => /\.zip$/i.test(b.pathname)).sort((a, b) => new Date(b.uploadedAt) - new Date(a.uploadedAt))[0];
-      const exeB = blobs.filter((b) => /\.exe$/i.test(b.pathname)).sort((a, b) => new Date(b.uploadedAt) - new Date(a.uploadedAt))[0];
-      if (zipB) files.zip = { name: path.basename(zipB.pathname), size: zipB.size, url: `/api/download/installer/${encodeURIComponent(path.basename(zipB.pathname))}` };
-      if (exeB) files.exe = { name: path.basename(exeB.pathname), size: exeB.size, url: `/api/download/installer/${encodeURIComponent(path.basename(exeB.pathname))}` };
-    } catch (e) {}
-  } else {
-    const fs = require('fs');
-    const { DOWNLOADS_DIR } = require('../config');
-    try {
-      const names = fs.readdirSync(DOWNLOADS_DIR).filter((f) => /\.(zip|exe)$/i.test(f));
-      const zipN = names.filter((n) => /\.zip$/i.test(n)).sort().reverse()[0];
-      const exeN = names.filter((n) => /\.exe$/i.test(n)).sort().reverse()[0];
-      if (zipN) {
-        const st = fs.statSync(path.join(DOWNLOADS_DIR, zipN));
-        files.zip = { name: zipN, size: st.size, url: `/api/download/installer/${encodeURIComponent(zipN)}` };
-      }
-      if (exeN) {
-        const st = fs.statSync(path.join(DOWNLOADS_DIR, exeN));
-        files.exe = { name: exeN, size: st.size, url: `/api/download/installer/${encodeURIComponent(exeN)}` };
-      }
-    } catch (e) {}
-  }
+  const stored = await newestStoredFiles();
+  const files = withManifestFallback({ zip: info.zip || null, exe: info.exe || null }, stored);
 
   res.json({
     success: true,
@@ -72,16 +59,8 @@ router.get('/check', asyncHandler(async (req, res) => {
   const info = await getVersionInfo();
   const updateAvailable = current ? isNewer(info.version, current) : false;
 
-  let files = { zip: info.zip || null, exe: info.exe || null };
-  if (USE_BLOB) {
-    try {
-      const blobs = await listBlobs();
-      const zipB = blobs.filter((b) => /\.zip$/i.test(b.pathname)).sort((a, b) => new Date(b.uploadedAt) - new Date(a.uploadedAt))[0];
-      const exeB = blobs.filter((b) => /\.exe$/i.test(b.pathname)).sort((a, b) => new Date(b.uploadedAt) - new Date(a.uploadedAt))[0];
-      if (zipB) files = { ...files, zip: { name: path.basename(zipB.pathname), size: zipB.size, url: `/api/download/installer/${encodeURIComponent(path.basename(zipB.pathname))}` } };
-      if (exeB) files = { ...files, exe: { name: path.basename(exeB.pathname), size: exeB.size, url: `/api/download/installer/${encodeURIComponent(path.basename(exeB.pathname))}` } };
-    } catch (e) {}
-  }
+  const stored = await newestStoredFiles();
+  const files = withManifestFallback({ zip: info.zip || null, exe: info.exe || null }, stored);
 
   res.json({
     success: true,
