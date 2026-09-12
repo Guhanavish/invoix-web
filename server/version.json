@@ -1,16 +1,16 @@
 {
-  "version": "1.0.3",
-  "notes": "Portal login gate with remember-me, reliable OTP codes, redesigned code emails, cookie consent, spam honeypots, anonymous analytics",
+  "version": "1.0.4",
+  "notes": "Startup portal login with remember-me and Google button. Fixed portal, no duplicates.",
   "mandatory": false,
-  "publishedAt": "2026-09-11T18:30:00.000Z",
+  "publishedAt": "2026-09-12T11:38:43.687Z",
   "zip": {
-    "name": "Invoix-v1.0.3.zip",
-    "size": 141121834,
-    "url": "/api/download/installer/Invoix-v1.0.3.zip"
+    "name": "Invoix-v1.0.4.zip",
+    "size": 141123093,
+    "url": "/api/download/installer/Invoix-v1.0.4.zip"
   },
   "exe": {
-    "name": "Invoix Setup 1.0.3.exe",
-    "size": 91644169,
-    "url": "/api/download/installer/Invoix%20Setup%201.0.3.exe"
+    "name": "Invoix Setup 1.0.4.exe",
+    "size": 91644780,
+    "url": "/api/download/installer/Invoix%20Setup%201.0.4.exe"
   }
 }
