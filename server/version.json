@@ -1,16 +1,16 @@
 {
-  "version": "1.0.4",
-  "notes": "Startup portal login with remember-me and Google button. Fixed portal, no duplicates.",
+  "version": "1.0.5",
+  "notes": "Auto safety backup before updates. Text boxes type instantly with no spinners. Dark mode fixes. Print sends the generated PDF. Google sync sign-in fixed.",
   "mandatory": false,
-  "publishedAt": "2026-09-12T11:38:43.687Z",
+  "publishedAt": "2026-09-12T12:36:57.155Z",
   "zip": {
-    "name": "Invoix-v1.0.4.zip",
-    "size": 141123093,
-    "url": "/api/download/installer/Invoix-v1.0.4.zip"
+    "name": "Invoix-v1.0.5.zip",
+    "size": 141126741,
+    "url": "/api/download/installer/Invoix-v1.0.5.zip"
   },
   "exe": {
-    "name": "Invoix Setup 1.0.4.exe",
-    "size": 91644780,
-    "url": "/api/download/installer/Invoix%20Setup%201.0.4.exe"
+    "name": "Invoix Setup 1.0.5.exe",
+    "size": 91647469,
+    "url": "/api/download/installer/Invoix%20Setup%201.0.5.exe"
   }
 }
