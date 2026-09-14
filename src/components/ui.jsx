@@ -1,5 +1,112 @@
-import React, { useEffect, useMemo, useState } from 'react';
+import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { ChevronLeft, ChevronRight, WifiOff } from 'lucide-react';
+
+// Motion preference — all decorative motion gates through this.
+export function usePrefersReducedMotion() {
+  const [reduced, setReduced] = useState(false);
+  useEffect(() => {
+    const mq = window.matchMedia('(prefers-reduced-motion: reduce)');
+    setReduced(mq.matches);
+    const on = (e) => setReduced(e.matches);
+    mq.addEventListener('change', on);
+    return () => mq.removeEventListener('change', on);
+  }, []);
+  return reduced;
+}
+
+// IntersectionObserver reveal — Anime.js stagger translated to CSS delays.
+export function useInView(threshold = 0.12) {
+  const ref = useRef(null);
+  const [inView, setInView] = useState(false);
+  useEffect(() => {
+    const el = ref.current;
+    if (!el) return;
+    if (typeof IntersectionObserver === 'undefined') { setInView(true); return; }
+    const io = new IntersectionObserver(([e]) => {
+      if (e.isIntersecting) { setInView(true); io.disconnect(); }
+    }, { threshold, rootMargin: '0px 0px -40px 0px' });
+    io.observe(el);
+    return () => io.disconnect();
+  }, [threshold]);
+  return [ref, inView];
+}
+
+export function Reveal({ children, delay = 0, as: Tag = 'div', className = '', ...props }) {
+  const [ref, inView] = useInView();
+  return (
+    <Tag ref={ref} className={`reveal ${inView ? 'in' : ''} ${className}`} data-delay={delay || undefined} {...props}>
+      {children}
+    </Tag>
+  );
+}
+
+// SplitText — ReactBits idea, zero-dep: words rise with stagger.
+export function SplitText({ text, className = '', step = 45, as: Tag = 'span' }) {
+  const reduced = usePrefersReducedMotion();
+  const words = String(text || '').split(' ');
+  return (
+    <Tag className={`split ${className}`} aria-label={text}>
+      {words.map((w, i) => (
+        <span key={i} className="w" aria-hidden="true">
+          <span style={reduced ? undefined : { animationDelay: `${i * step}ms` }}>{w}</span>
+          {i < words.length - 1 ? '\u00A0' : ''}
+        </span>
+      ))}
+    </Tag>
+  );
+}
+
+// CountUp — ReactBits CountUp idea, rAF + tabular nums, exact final value.
+export function CountUp({ value, format, duration = 900 }) {
+  const reduced = usePrefersReducedMotion();
+  const target = Number(value) || 0;
+  const [display, setDisplay] = useState(target);
+  const first = useRef(true);
+  useEffect(() => {
+    if (reduced || first.current) { setDisplay(target); first.current = false; return; }
+    let raf = 0;
+    const t0 = performance.now();
+    const from = 0;
+    const tick = (t) => {
+      const p = Math.min(1, (t - t0) / duration);
+      const eased = 1 - Math.pow(1 - p, 4);
+      setDisplay(from + (target - from) * eased);
+      if (p < 1) raf = requestAnimationFrame(tick);
+      else setDisplay(target);
+    };
+    raf = requestAnimationFrame(tick);
+    return () => cancelAnimationFrame(raf);
+  }, [target, duration, reduced]);
+  const out = format ? format(display) : String(Math.round(display));
+  return <span className="count">{out}</span>;
+}
+
+// ShimmerText — KokonutUI shimmer-text, pure CSS.
+export function ShimmerText({ children, className = '' }) {
+  return <span className={`shimmer ${className}`}>{children}</span>;
+}
+
+// SpotlightCard — ReactBits SpotlightCard, mousemove sets --mx/--my only.
+export function SpotlightCard({ children, className = '', ...props }) {
+  const ref = useRef(null);
+  const onMove = (e) => {
+    const el = ref.current;
+    if (!el) return;
+    const r = el.getBoundingClientRect();
+    el.style.setProperty('--mx', `${e.clientX - r.left}px`);
+    el.style.setProperty('--my', `${e.clientY - r.top}px`);
+  };
+  return (
+    <div ref={ref} onMouseMove={onMove} className={`card spot pressable ${className}`} {...props}>
+      {children}
+    </div>
+  );
+}
+
+// AnimatedList — ReactBits AnimatedList stagger, CSS-only enter.
+export function AnimatedList({ children, className = '' }) {
+  return <div className={`anim-list ${className}`}>{children}</div>;
+}
 
 // Tracks browser connectivity (submit buttons + banners react to this)
 export function useOnline() {
@@ -80,7 +187,7 @@ export function Badge({ status, children }) {
   return <span className={`badge ${cls}`}>{children || status}</span>;
 }
 
-export function StatCard({ label, value, sub, icon, tone = 'blue' }) {
+export function StatCard({ label, value, sub, icon, tone = 'blue', numeric, format }) {
   const accent = {
     blue: 'var(--ink)',
     green: 'var(--sage)',
@@ -88,13 +195,13 @@ export function StatCard({ label, value, sub, icon, tone = 'blue' }) {
     red: 'var(--oxide)',
   }[tone] || 'var(--ink)';
   return (
-    <div className="card stat-card">
+    <div className="card stat-card spot pressable">
       <span className="accent-line" style={{ background: accent }} />
       <div className="label">
         <span className="stat-icon" style={{ color: accent, borderColor: 'var(--line)' }}>{icon}</span>
         {label}
       </div>
-      <h2>{value}</h2>
+      <h2>{numeric != null ? <CountUp value={numeric} format={format} /> : value}</h2>
       {sub && <div className="stat-sub">{sub}</div>}
     </div>
   );

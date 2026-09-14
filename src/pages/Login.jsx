@@ -40,9 +40,17 @@ export default function Login() {
   const pwError = !password ? 'Enter your password.' : '';
   const formValid = !idError && !pwError;
 
-  const onGoogleSuccess = () => {
+  const onGoogleSuccess = (res) => {
     setError('');
     setGoogleBusy(false);
+    const newId = res && res.isNew && res.user && res.user.userId;
+    if (newId) {
+      // First Google signup: the user just picked this id — make sure they see
+      // it before entering, it is their backup/sync identity.
+      setOk(`Account "${newId}" created. This is your User ID — save it, you will need it for backup and desktop sync. Opening…`);
+      setTimeout(() => navigate(destination(), { replace: true }), 2600);
+      return;
+    }
     navigate(destination(), { replace: true });
   };
   const onGoogleError = (err) => {
@@ -146,7 +154,7 @@ export default function Login() {
                 onSuccess={onGoogleSuccess}
                 onError={onGoogleError}
                 onBusyChange={setGoogleBusy}
-                label="Sign in with the same Google account you use in the desktop app"
+                label="First time with Google? You will pick a User ID next — save it for backup & desktop sync"
               />
               {googleBusy && <div style={{ textAlign: 'center', fontSize: 12, color: 'var(--muted)', marginTop: 6 }}>Contacting Google…</div>}
               <div className="divider"><span>or use your user id</span></div>

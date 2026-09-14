@@ -25,7 +25,17 @@ export default function Register() {
   const [verifyCode, setVerifyCode] = useState('');
   const [honey, setHoney] = useState('');
 
-  const onGoogleSuccess = () => navigate('/app', { replace: true });
+  const onGoogleSuccess = (res) => {
+    const newId = res && res.isNew && res.user && res.user.userId;
+    if (newId) {
+      // First Google signup: the user just picked this id — confirm it on screen.
+      setError('');
+      setOk(`Account "${newId}" created. This is your User ID — save it, you will need it for backup and desktop sync. Opening folio…`);
+      setTimeout(() => navigate('/app', { replace: true }), 2600);
+      return;
+    }
+    navigate('/app', { replace: true });
+  };
   const onGoogleError = (err) => {
     setGoogleBusy(false);
     setError(err.message || 'Google sign-in failed');
@@ -173,7 +183,7 @@ export default function Register() {
               <GoogleButton
                 onSuccess={onGoogleSuccess}
                 onError={onGoogleError}
-                label="Create with the same Google account you use in the desktop app"
+                label="First time with Google? You will pick a User ID next — save it for backup & desktop sync"
               />
               <div className="divider"><span>or create with user id</span></div>
               <div className="field">

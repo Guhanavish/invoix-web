@@ -17,8 +17,35 @@ function asyncHandler(fn) {
 const id = (userId) => String(userId).toLowerCase();
 
 // Derive a stable backend user id from a Google account (stable across web + app)
+// LEGACY: first-generation Google accounts were auto-provisioned as g_<sub>.
+// New Google signups must pick their own user id (used for backup/sync), so
+// g_<sub> is only a fallback for accounts created before the chooser existed.
 function googleUserId(sub) {
   return `g_${sub}`;
+}
+
+// Suggest a user id from the Google profile (email prefix, sanitized).
+// Client shows it pre-filled in the chooser; user can edit before confirming.
+function suggestUserId(email, name, sub) {
+  let base = '';
+  if (email && String(email).includes('@')) {
+    base = String(email).split('@')[0] || '';
+  } else if (name) {
+    base = String(name).trim().toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, '');
+  }
+  base = String(base).toLowerCase().replace(/[^a-z0-9._-]/g, '').replace(/^[._-]+/, '').slice(0, 32);
+  if (base.length < 2) base = `user-${String(sub || 'x').slice(-6).toLowerCase().replace(/[^a-z0-9]/g, '') || 'x'}`;
+  if (/^g_/i.test(base)) base = `u-${base}`.slice(0, 32);
+  return base;
+}
+
+function findByGoogleSub(store, sub) {
+  for (const key of Object.keys(store.users || {})) {
+    if (key === '__rev') continue;
+    const u = store.users[key];
+    if (u && u.googleSub === sub) return key;
+  }
+  return null;
 }
 
 router.post('/register', asyncHandler(async (req, res) => {
@@ -146,10 +173,15 @@ router.post('/reset', asyncHandler(async (req, res) => {
 // Google login / sign-in — works for BOTH the website and the desktop app.
 // The client sends a Google ID token; the server verifies it and resolves to a
 // single stable account (keyed by Google's `sub`), so web + app share one sync identity.
-// If the Google account has no existing profile, a new password-less account is
-// auto-provisioned so "Sign in with Google" always succeeds for any Google user.
+//
+// First-time Google users MUST pick their own user id (their backup/sync id):
+//   1st call: { id_token } -> 409 { code: 'NEEDS_USER_ID', suggestedUserId, email, name }
+//   2nd call: { id_token, userId: '<chosen>' } -> session (isNew: true)
+// Returning Google users call with just { id_token } and get a session directly.
+// The desktop app opens the portal /login page in a popup, so the same web
+// chooser UI runs inside the app — no separate desktop flow needed.
 router.post('/google', asyncHandler(async (req, res) => {
-  const { id_token } = req.body || {};
+  const { id_token, userId: requestedUserId } = req.body || {};
   if (!validIdToken(id_token)) {
     return res.status(400).json({ success: false, error: 'Missing Google id_token' });
   }
@@ -171,39 +203,46 @@ router.post('/google', asyncHandler(async (req, res) => {
     return res.status(401).json({ success: false, error: 'Google sign-in failed: missing subject in token' });
   }
 
-  const uid = googleUserId(profile.sub);
+  const legacyUid = googleUserId(profile.sub);
   const normalizedEmail = profile.email ? String(profile.email).trim().toLowerCase() : null;
 
-  let user;
+  let uid = null;
+  let user = null;
+  let isNew = false;
   try {
-    user = await findUser(uid);
-    if (!user) {
-      // Auto-provision a password-less Google account for first-time Google users.
-      // Gmail is the default verified email for Google auth.
-      const store = await loadUsers();
-      if (!store.users[uid]) {
-        store.users[uid] = {
-          google: true,
-          email: normalizedEmail,
-          emailVerified: true,
-          name: profile.name ? String(profile.name).trim() : null,
-          picture: profile.picture || null,
-          createdAt: new Date().toISOString(),
-        };
-        await saveUsers(store);
-      }
-      user = store.users[uid];
+    const store0 = await loadUsers();
+    // 1) Returning user: linked by googleSub (new scheme)…
+    const linkedKey = findByGoogleSub(store0, profile.sub);
+    if (linkedKey) {
+      uid = linkedKey;
+      user = store0.users[uid];
     } else {
+      // 2) …or by legacy g_<sub> id (accounts created before the User ID chooser).
+      user = await findUser(legacyUid);
+      if (user) {
+        uid = legacyUid;
+        const store = await loadUsers();
+        store.users[uid] = { ...store.users[uid], googleSub: profile.sub, google: true };
+        await saveUsers(store);
+        user = store.users[uid];
+      }
+    }
+
+    if (uid && user) {
       // Keep profile info fresh (email/name/picture) if Google profile changed
       const needsUpdate =
         (normalizedEmail && user.email !== normalizedEmail) ||
         (profile.name && user.name !== profile.name) ||
-        (profile.picture && user.picture !== profile.picture);
+        (profile.picture && user.picture !== profile.picture) ||
+        (!user.googleSub) ||
+        (user.emailVerified !== true);
       if (needsUpdate) {
         const store = await loadUsers();
         const existing = store.users[uid] || user;
         store.users[uid] = {
           ...existing,
+          google: true,
+          googleSub: profile.sub,
           email: normalizedEmail || existing.email || null,
           emailVerified: true,
           name: profile.name ? String(profile.name).trim() : existing.name || null,
@@ -211,15 +250,58 @@ router.post('/google', asyncHandler(async (req, res) => {
         };
         await saveUsers(store);
         user = store.users[uid];
-      } else if (user.emailVerified !== true && normalizedEmail) {
-        // Ensure Google accounts are marked verified
-        const store = await loadUsers();
-        store.users[uid] = { ...store.users[uid], emailVerified: true };
-        await saveUsers(store);
-        user = store.users[uid];
       }
+    } else {
+      // 3) First-time Google user: they MUST pick their own user id.
+      // The client calls once without userId to learn the suggestion, shows the
+      // chooser, then calls again with { id_token, userId } to finish signup.
+      const chosen = typeof requestedUserId === 'string' ? requestedUserId.trim().toLowerCase() : '';
+      if (!chosen) {
+        return res.status(409).json({
+          success: false,
+          code: 'NEEDS_USER_ID',
+          error: 'Pick a user id to finish creating your Google account.',
+          suggestedUserId: suggestUserId(normalizedEmail, profile.name, profile.sub),
+          email: normalizedEmail,
+          name: profile.name || null,
+        });
+      }
+      if (!validUserId(chosen)) {
+        return res.status(400).json({ success: false, code: 'BAD_USER_ID', error: 'User id must be 2-32 characters: letters, numbers, dot, dash or underscore.' });
+      }
+      if (/^g_/i.test(chosen)) {
+        return res.status(400).json({ success: false, code: 'BAD_USER_ID', error: 'User ids starting with "g_" are reserved. Pick another id.' });
+      }
+      if (await findUser(chosen)) {
+        return res.status(409).json({ success: false, code: 'USERID_TAKEN', error: 'That user id is already taken. Try another.' });
+      }
+      if (normalizedEmail) {
+        const emailOwner = await findUserByEmail(normalizedEmail);
+        if (emailOwner && emailOwner.googleSub !== profile.sub) {
+          // Same Gmail on a password account: don't silently fork identities.
+          return res.status(409).json({ success: false, code: 'EMAIL_TAKEN', error: 'That Google email is already registered to another user id. Sign in with your user id instead.' });
+        }
+      }
+      const store = await loadUsers();
+      if (store.users[chosen]) {
+        return res.status(409).json({ success: false, code: 'USERID_TAKEN', error: 'That user id is already taken. Try another.' });
+      }
+      store.users[chosen] = {
+        google: true,
+        googleSub: profile.sub,
+        email: normalizedEmail,
+        emailVerified: true,
+        name: profile.name ? String(profile.name).trim() : null,
+        picture: profile.picture || null,
+        createdAt: new Date().toISOString(),
+      };
+      await saveUsers(store);
+      uid = chosen;
+      user = store.users[uid];
+      isNew = true;
     }
   } catch (e) {
+    if (e && (e.code === 'NEEDS_USER_ID' || e.code === 'USERID_TAKEN' || e.code === 'BAD_USER_ID' || e.code === 'EMAIL_TAKEN')) throw e;
     console.error('[auth/google] storage error:', e);
     const isStorageUnset = e && /Account storage is unavailable/i.test(e.message);
     return res.status(500).json({
@@ -232,6 +314,7 @@ router.post('/google', asyncHandler(async (req, res) => {
 
   res.json({
     success: true,
+    isNew,
     token: issueToken(uid),
     user: {
       userId: uid,

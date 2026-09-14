@@ -7,6 +7,7 @@ import {
   Github, Linkedin, Instagram,
 } from 'lucide-react';
 import { api, fmtBytes } from '../api';
+import { SplitText, Reveal, CountUp } from '../components/ui';
 
 const ZIP_NAME = 'Invoix-v1.0.2.zip';
 const EXE_NAME = 'Invoix Setup 1.0.2.exe';
@@ -82,16 +83,20 @@ export default function Landing() {
           <div>
             <span className="eyebrow">Heritage-grade GST billing</span>
             <h1>
-              Your business,<br />
-              <span className="grad">bound in paper.</span>
+              <SplitText text="Your business," />
+              <br />
+              <span className="grad"><SplitText text="bound in paper." /></span>
               <span className="line2">live on the web.</span>
             </h1>
+            <Reveal delay={1}>
             <p className="lead">
               Every invoice, customer and ledger entry you set in the Invoix desktop atelier
               appears here — typeset, balanced, and ready to present. No exports. No drift.
             </p>
+            </Reveal>
+            <Reveal delay={2}>
             <div className="hero-cta" style={{ flexWrap: 'wrap' }}>
-              <a className="btn btn-oxide btn-lg" href={zipUrl} download={zipFile ? zipFile.name : ZIP_NAME} onClick={trackDownload}>
+              <a className="btn btn-oxide btn-lg pressable" href={zipUrl} download={zipFile ? zipFile.name : ZIP_NAME} onClick={trackDownload}>
                 <Package size={18} />
                 Download portable
               </a>
@@ -100,6 +105,7 @@ export default function Landing() {
                 <ArrowRight size={14} style={{ opacity: 0.7 }} />
               </Link>
             </div>
+            </Reveal>
             <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginTop: 10, fontSize: 13, color: '#9a9590', fontFamily: 'var(--font-mono)' }}>
               <span style={{ display: 'inline-flex', alignItems: 'center', gap: 6 }}><HardDrive size={13} /> ZIP · {zipFile ? fmtBytes(zipFile.size) : '141 MB'} · Windows x64 · No install</span>
               <span style={{ opacity: 0.5 }}>·</span>

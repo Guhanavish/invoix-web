@@ -73,6 +73,8 @@ export const api = {
       if (body && body.code) err.code = body.code;
       if (body && body.email) err.email = body.email;
       if (body && body.userId) err.userId = body.userId;
+      if (body && body.suggestedUserId) err.suggestedUserId = body.suggestedUserId;
+      if (body && body.name) err.name = body.name;
       throw err;
     }
     return body;
@@ -92,8 +94,9 @@ export const api = {
     fd.append(field, file);
     return this.request(path, { method: 'POST', body: fd });
   },
-  async googleLogin(idToken) {
-    const res = await this.post('/auth/google', { id_token: idToken });
+  async googleLogin(idToken, userId) {
+    const body = userId ? { id_token: idToken, userId } : { id_token: idToken };
+    const res = await this.post('/auth/google', body);
     if (res && res.token) this.setSession(res.token, res.user);
     return res;
   },

@@ -4,7 +4,7 @@ import { IndianRupee, FileText, Users, Package, ArrowUpRight, CloudUpload, Cloud
 import { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
 import { api, fmtMoney, fmtDate, fmtDateTime, invoiceStatus } from '../api';
 import { useAutoRefresh } from '../useAutoSync';
-import { StatCard, Badge, Empty, Loading, Skeleton, ErrorState, OfflineBar, useOnline } from '../components/ui';
+import { StatCard, Badge, Empty, Loading, Skeleton, ErrorState, OfflineBar, useOnline, Reveal, AnimatedList, SpotlightCard } from '../components/ui';
 
 export default function Dashboard() {
   const [data, setData] = useState(null);
@@ -72,14 +72,14 @@ export default function Dashboard() {
       </p>
 
       <div className="stat-grid">
-        <StatCard tone="blue" icon={<IndianRupee size={16} />} label="Total revenue" value={fmtMoney(totalRevenue)} sub={`${fmtMoney(monthlyRevenue)} this month`} />
-        <StatCard tone="green" icon={<FileText size={16} />} label="Invoices" value={String(totalInvoices)} sub={`${dueInvoices} overdue · ${fmtMoney(totalDue)} due`} />
-        <StatCard tone="amber" icon={<Users size={16} />} label="Customers" value={String(totalCustomers)} sub="In the book" />
-        <StatCard tone="red" icon={<Package size={16} />} label="Products" value={String(totalProducts)} sub={`${fmtMoney(totalPending)} receivable`} />
+        <StatCard tone="blue" icon={<IndianRupee size={16} />} label="Total revenue" numeric={totalRevenue} format={(v) => fmtMoney(v)} sub={`${fmtMoney(monthlyRevenue)} this month`} />
+        <StatCard tone="green" icon={<FileText size={16} />} label="Invoices" numeric={totalInvoices} format={(v) => String(Math.round(v))} sub={`${dueInvoices} overdue · ${fmtMoney(totalDue)} due`} />
+        <StatCard tone="amber" icon={<Users size={16} />} label="Customers" numeric={totalCustomers} format={(v) => String(Math.round(v))} sub="In the book" />
+        <StatCard tone="red" icon={<Package size={16} />} label="Products" numeric={totalProducts} format={(v) => String(Math.round(v))} sub={`${fmtMoney(totalPending)} receivable`} />
       </div>
 
       <div className="bento">
-        <div className="card bento-card two">
+        <Reveal delay={1} className="card bento-card two spot">
           <div className="bento-head">
             <h3>Revenue <i style={{ fontWeight: 300, fontStyle: 'italic', color: 'var(--stone)' }}>press</i></h3>
             <span className="label">12 months · INR</span>
@@ -103,9 +103,9 @@ export default function Dashboard() {
               </AreaChart>
             </ResponsiveContainer>
           )}
-        </div>
+        </Reveal>
 
-        <div className="card bento-card" style={{ background: 'var(--ink)', color: '#fdfcf8', borderColor: '#1a1a18' }}>
+        <Reveal delay={2} className="card bento-card" style={{ background: 'var(--ink)', color: '#fdfcf8', borderColor: '#1a1a18' }}>
           <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 18 }}>
             <h3 style={{ color: '#fdfcf8', fontSize: 17 }}>Sync <i style={{ fontWeight: 300, color: '#c4a99a' }}>status</i></h3>
             <span className="badge" style={{ background: sync?.synced ? '#7a8450' : '#3a3a38', color: '#fff', borderColor: 'transparent' }}>{sync?.synced ? 'LIVE' : 'EMPTY'}</span>
@@ -127,13 +127,13 @@ export default function Dashboard() {
               <span style={{ fontFamily: 'var(--font-mono)', fontSize: 10, letterSpacing: '0.12em', textTransform: 'uppercase', color: '#9a9590' }}>Records</span>
               <span style={{ fontFamily: 'var(--font-display)', fontWeight: 700, fontSize: 16 }}>{sync?.counts ? Object.values(sync.counts).reduce((a, b) => a + b, 0) : 0}</span>
             </div>
-            <Link to="/app/invoices" className="btn btn-ghost-light btn-sm" style={{ marginTop: 8, borderRadius: 999 }}>
+            <Link to="/app/invoices" className="btn btn-ghost-light btn-sm pressable" style={{ marginTop: 8, borderRadius: 999 }}>
               Open folio <ArrowUpRight size={14} />
             </Link>
           </div>
-        </div>
+        </Reveal>
 
-        <div className="card bento-card full">
+        <Reveal delay={3} className="card bento-card full">
           <div className="bento-head">
             <h3>Recent <i style={{ fontWeight: 300, color: 'var(--stone)' }}>invoices</i></h3>
             <Link to="/app/invoices" className="label" style={{ color: 'var(--ink)', borderBottom: '1px solid var(--line-strong)', paddingBottom: 1 }}>View all →</Link>
@@ -141,7 +141,7 @@ export default function Dashboard() {
           {recentInvoices.length === 0 ? (
             <Empty icon={<FileText size={20} />} title="No invoices" sub="Invoices pressed in the app will appear here, set in type." />
           ) : (
-            <div className="table-wrap">
+            <AnimatedList className="table-wrap">
               <table className="tbl">
                 <thead>
                   <tr>
@@ -169,9 +169,9 @@ export default function Dashboard() {
                   })}
                 </tbody>
               </table>
-            </div>
+            </AnimatedList>
           )}
-        </div>
+        </Reveal>
       </div>
     </div>
   );
