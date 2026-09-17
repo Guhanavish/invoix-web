@@ -104,8 +104,8 @@ export function SpotlightCard({ children, className = '', ...props }) {
 }
 
 // AnimatedList — ReactBits AnimatedList stagger, CSS-only enter.
-export function AnimatedList({ children, className = '' }) {
-  return <div className={`anim-list ${className}`}>{children}</div>;
+export function AnimatedList({ children, className = '', style, ...props }) {
+  return <div className={`anim-list ${className}`} style={style} {...props}>{children}</div>;
 }
 
 // Tracks browser connectivity (submit buttons + banners react to this)

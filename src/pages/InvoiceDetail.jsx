@@ -3,7 +3,7 @@ import { Link, useParams } from 'react-router-dom';
 import { ArrowLeft, FileText, Printer, Eye, CloudOff, FileX2 } from 'lucide-react';
 import { api, fmtMoney, fmtDate, invoiceStatus } from '../api';
 import { useAutoRefresh } from '../useAutoSync';
-import { Badge, Empty, Skeleton, ErrorState, OfflineBar, useOnline } from '../components/ui';
+import { Badge, Empty, Skeleton, ErrorState, OfflineBar, useOnline, Reveal } from '../components/ui';
 import InvoicePaper from '../components/InvoicePaper';
 
 export default function InvoiceDetail() {
@@ -90,7 +90,7 @@ export default function InvoiceDetail() {
         </button>
       </div>
 
-      <div className="card detail-hero" style={{ marginBottom: 16 }}>
+      <Reveal><div className="card detail-hero" style={{ marginBottom: 16 }}>
         <div>
           <div style={{ display: 'flex', alignItems: 'center', gap: 10, flexWrap: 'wrap' }}>
             <h1>{inv.invoice_no}</h1>
@@ -105,7 +105,7 @@ export default function InvoiceDetail() {
           <div style={{ fontFamily: 'var(--font-display)', fontSize: 32, fontWeight: 700, letterSpacing: '-0.03em' }}>{fmtMoney(inv.grand_total)}</div>
           <div style={{ fontFamily: 'var(--font-mono)', fontSize: 11, color: 'var(--stone)' }}>{inv.items?.length || 0} line items · Qty total</div>
         </div>
-      </div>
+      </div></Reveal>
 
       {view === 'paper' ? (
         <InvoicePaper invoice={inv} company={company} />

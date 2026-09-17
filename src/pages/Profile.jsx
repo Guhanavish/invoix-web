@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { User, Mail, Phone, Building2, MapPin, ShieldCheck, CheckCircle2, AlertCircle, Clock, Send, CloudOff, WifiOff, Hourglass, CheckCheck, XCircle } from 'lucide-react';
 import { api } from '../api';
-import { Skeleton, ErrorState, FieldError, OfflineBar, useOnline } from '../components/ui';
+import { Skeleton, ErrorState, FieldError, OfflineBar, useOnline, PageHead, Reveal } from '../components/ui';
 
 const EMAIL_RE = /^[^\s@]{1,64}@[^\s@]{1,253}\.[^\s@]{2,}$/;
 
@@ -117,16 +117,16 @@ export default function Profile() {
 
   return (
     <div style={{ maxWidth: 720, margin: '0 auto' }}>
-      <div style={{ marginBottom: 16 }}>
-        <h1 style={{ fontFamily: 'var(--font-display)', fontSize: 24, fontWeight: 700, display: 'flex', alignItems: 'center', gap: 10 }}><User size={22} /> Profile</h1>
-        <div style={{ fontSize: 13, color: 'var(--stone)', marginTop: 4 }}>Manage your business identity. Email must be verified for password reset. Changes require approval in the desktop app and will sync to the web.</div>
-      </div>
+      <PageHead
+        title={<span style={{ display: 'inline-flex', alignItems: 'center', gap: 10 }}><User size={22} /> Profile</span>}
+        sub="Manage your business identity. Email must be verified for password reset. Changes require approval in the desktop app and will sync to the web."
+      />
 
       {!online && <OfflineBar />}
       {error && <div className="err-box" style={{ marginBottom: 12 }}>{error}</div>}
       {ok && <div className="ok-box" style={{ marginBottom: 12 }}>{ok}</div>}
 
-      <div className="card" style={{ padding: 20, marginBottom: 16 }}>
+      <Reveal><div className="card" style={{ padding: 20, marginBottom: 16 }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 12 }}>
           <ShieldCheck size={18} color={profile.emailVerified ? 'var(--success)' : 'var(--oxide)'} />
           <span style={{ fontWeight: 600 }}>Email verification</span>
@@ -147,9 +147,9 @@ export default function Profile() {
             )}
           </div>
         )}
-      </div>
+      </div></Reveal>
 
-      <div className="card" style={{ padding: 20, marginBottom: 16 }}>
+      <Reveal delay={1}><div className="card" style={{ padding: 20, marginBottom: 16 }}>
         <h2 style={{ fontFamily: 'var(--font-display)', fontSize: 16, fontWeight: 600, marginBottom: 12 }}>Edit details</h2>
         <form onSubmit={saveProfile}>
           <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
@@ -174,9 +174,9 @@ export default function Profile() {
           </div>
           <button className="btn btn-primary" style={{ marginTop: 12 }} disabled={saving || !online} title={!online ? 'You are offline. Reconnect to send this request.' : ''}>{saving ? 'Sending…' : !online ? 'Offline — reconnect to send' : 'Request approval for changes'}</button>
         </form>
-      </div>
+      </div></Reveal>
 
-      <div className="card" style={{ padding: 20 }}>
+      <Reveal delay={2}><div className="card" style={{ padding: 20 }}>
         <h2 style={{ fontFamily: 'var(--font-display)', fontSize: 16, fontWeight: 600, marginBottom: 12, display: 'flex', alignItems: 'center', gap: 8 }}><Clock size={16} /> Recent approvals</h2>
         {approvals.length === 0 ? (
           <div style={{ fontSize: 13, color: 'var(--stone)' }}>No pending approvals. When you request a change, it appears here and in the desktop app’s Approvals.</div>
@@ -206,7 +206,7 @@ export default function Profile() {
             ))}
           </div>
         )}
-      </div>
+      </div></Reveal>
     </div>
   );
 }

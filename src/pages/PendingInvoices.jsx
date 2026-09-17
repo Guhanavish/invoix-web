@@ -3,7 +3,7 @@ import { Link } from 'react-router-dom';
 import { Inbox, RefreshCw, FilePlus2, Trash2, Clock, CloudOff } from 'lucide-react';
 import { api, fmtMoney, fmtDateTime } from '../api';
 import { useAutoRefresh } from '../useAutoSync';
-import { Badge, Skeleton, ErrorState, OfflineBar, useOnline } from '../components/ui';
+import { Badge, Skeleton, ErrorState, OfflineBar, useOnline, PageHead, AnimatedList } from '../components/ui';
 
 export default function PendingInvoices() {
   const [invoices, setInvoices] = useState(null);
@@ -33,18 +33,15 @@ export default function PendingInvoices() {
 
   return (
     <div>
-      <div style={{ display: 'flex', alignItems: 'baseline', gap: 12, marginBottom: 4 }}>
-        <h1 style={{ fontSize: 36 }}>Pending</h1>
-        <span style={{ fontFamily: 'var(--font-editorial)', fontStyle: 'italic', color: 'var(--stone)', fontSize: 14 }}>Drafts awaiting the press.</span>
-      </div>
-      <p style={{ fontFamily: 'var(--font-mono)', fontSize: 10, letterSpacing: '0.14em', textTransform: 'uppercase', color: 'var(--stone-light)', marginBottom: 18 }}>Web drafts — become real only after desktop approval.</p>
-
-      {!online && <OfflineBar />}
-
-      <div style={{ display: 'flex', gap: 10, marginBottom: 16 }}>
+      <PageHead
+        title="Pending"
+        sub="Drafts awaiting the press — web drafts become real only after desktop approval."
+      >
         <button className="btn btn-ghost btn-sm" onClick={load} style={{ borderRadius: 12 }}><RefreshCw size={13} /> Refresh</button>
         <Link to="/app/invoices/new" className="btn btn-primary btn-sm" style={{ borderRadius: 12 }}><FilePlus2 size={14} /> New draft</Link>
-      </div>
+      </PageHead>
+
+      {!online && <OfflineBar />}
 
       {error && (
         <ErrorState
@@ -65,7 +62,7 @@ export default function PendingInvoices() {
           <Link to="/app/invoices/new" className="btn btn-oxide btn-sm" style={{ marginTop: 16, borderRadius: 999 }}>Compose draft</Link>
         </div>
       ) : (
-        <div style={{ display: 'grid', gap: 14 }}>
+        <AnimatedList style={{ display: 'grid', gap: 14 }}>
           {invoices.map((p) => (
             <div key={p.id} className="card" style={{ padding: 22, display: 'grid', gridTemplateColumns: '1fr auto', gap: 16, alignItems: 'start' }}>
               <div>
@@ -97,7 +94,7 @@ export default function PendingInvoices() {
               </div>
             </div>
           ))}
-        </div>
+        </AnimatedList>
       ))}
     </div>
   );

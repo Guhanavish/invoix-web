@@ -3,7 +3,7 @@ import { Link, useNavigate } from 'react-router-dom';
 import { FilePlus2, Trash2, Plus, ArrowLeft, CheckCircle2, WifiOff, Inbox, FileText } from 'lucide-react';
 import { api, fmtMoney } from '../api';
 import { useAutoRefresh } from '../useAutoSync';
-import { Loading, FieldError, OfflineBar, useOnline } from '../components/ui';
+import { Loading, FieldError, OfflineBar, useOnline, PageHead, Reveal } from '../components/ui';
 
 const blankItem = { description: '', hsn_code: '', quantity: 1, unit: 'Nos', rate: 0, discount_percent: 0, gst_rate: 18, cess: 0 };
 const EMAIL_RE = /^[^\s@]{1,64}@[^\s@]{1,253}\.[^\s@]{2,}$/;
@@ -136,11 +136,12 @@ export default function NewInvoice() {
 
   return (
     <div>
-      <div style={{ display: 'flex', alignItems: 'baseline', gap: 12, marginBottom: 4 }}>
-        <h1 style={{ fontSize: 36 }}>New <i style={{ fontWeight: 300, color: 'var(--oxide)' }}>draft</i></h1>
+      <PageHead
+        title={<>New <i style={{ fontWeight: 300, color: 'var(--oxide)' }}>draft</i></>}
+        sub="Compose a draft here — it becomes a real invoice only after you approve it in the desktop app."
+      >
         <span style={{ fontFamily: 'var(--font-mono)', fontSize: 10, letterSpacing: '0.12em', textTransform: 'uppercase', color: 'var(--stone-light)', border: '1px solid var(--line)', padding: '4px 10px', borderRadius: 999 }}>Web → Desktop approval</span>
-      </div>
-      <p style={{ fontFamily: 'var(--font-editorial)', fontStyle: 'italic', color: 'var(--stone)', marginBottom: 20 }}>Compose a draft here — it becomes a real invoice only after you approve it in the desktop app.</p>
+      </PageHead>
 
       {error && <div className="err-box" style={{ marginBottom: 16 }}>{error}</div>}
 
@@ -169,7 +170,7 @@ export default function NewInvoice() {
       ) : !company ? <Loading /> : (
         <form onSubmit={submit} noValidate>
           <OfflineBar />
-          <div className="card" style={{ padding: 28, marginBottom: 16 }}>
+          <Reveal><div className="card" style={{ padding: 28, marginBottom: 16 }}>
             <h3 style={{ fontFamily: 'var(--font-display)', fontSize: 18, marginBottom: 16, paddingBottom: 12, borderBottom: '1px solid var(--line)' }}>Customer <span style={{ fontWeight: 300, fontStyle: 'italic', color: 'var(--stone)' }}>— bill to</span></h3>
             <div className="grid2">
               <div className="field">
@@ -194,9 +195,9 @@ export default function NewInvoice() {
                 <FieldError error={fieldErrors.customer_email} hint="Optional. Used only if you share this draft." />
               </div>
             </div>
-          </div>
+          </div></Reveal>
 
-          <div className="card" style={{ padding: 28, marginBottom: 16 }}>
+          <Reveal delay={1}><div className="card" style={{ padding: 28, marginBottom: 16 }}>
             <h3 style={{ fontFamily: 'var(--font-display)', fontSize: 18, marginBottom: 16, paddingBottom: 12, borderBottom: '1px solid var(--line)' }}>Invoice <span style={{ fontWeight: 300, fontStyle: 'italic', color: 'var(--stone)' }}>— details</span></h3>
             <div className="grid2">
               <div className="field">
@@ -215,9 +216,9 @@ export default function NewInvoice() {
               <div className="field"><label>Notes</label><textarea className="input" rows={2} value={invoice.notes} onChange={setInv('notes')} placeholder="Visible on invoice" /></div>
               <div className="field" style={{ gridColumn: '1 / -1' }}><label>Terms</label><textarea className="input" rows={2} value={invoice.terms} onChange={setInv('terms')} placeholder="Payment terms" /></div>
             </div>
-          </div>
+          </div></Reveal>
 
-          <div className="card" style={{ padding: 28, marginBottom: 16 }}>
+          <Reveal delay={2}><div className="card" style={{ padding: 28, marginBottom: 16 }}>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16, paddingBottom: 12, borderBottom: '1px solid var(--line)' }}>
               <h3 style={{ fontFamily: 'var(--font-display)', fontSize: 18 }}>Items <span style={{ fontFamily: 'var(--font-mono)', fontSize: 11, color: 'var(--stone-light)', fontWeight: 400 }}>— {items.length} lines</span></h3>
               <button type="button" className="btn btn-ghost btn-sm" onClick={addItem} style={{ borderRadius: 999 }}><Plus size={14} /> Add line</button>
@@ -243,7 +244,7 @@ export default function NewInvoice() {
               <div style={{ fontFamily: 'var(--font-mono)', fontSize: 11, opacity: 0.7, marginTop: 4 }}>Sub {fmtMoney(totals.sub_total)} · Tax {fmtMoney(totals.cgst+totals.sgst+totals.igst)}</div>
             </div>
             <div style={{ clear: 'both' }} />
-          </div>
+          </div></Reveal>
 
           <div style={{ display: 'flex', justifyContent: 'flex-end', gap: 10 }}>
             <Link to="/app/invoices" className="btn btn-ghost" style={{ borderRadius: 12 }}>Cancel</Link>
