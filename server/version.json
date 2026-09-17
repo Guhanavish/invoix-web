@@ -1,16 +1,16 @@
 {
-  "version": "1.0.5",
-  "notes": "Auto safety backup before updates. Text boxes type instantly with no spinners. Dark mode fixes. Print sends the generated PDF. Google sync sign-in fixed.",
+  "version": "1.0.6",
+  "notes": "Manage Organizations layout fix, per-user username privacy, sidebar New Invoice touch fix, full web UI rebuild sweep",
   "mandatory": false,
-  "publishedAt": "2026-09-12T12:36:57.155Z",
+  "publishedAt": "2026-09-17T15:49:43.493Z",
   "zip": {
-    "name": "Invoix-v1.0.5.zip",
-    "size": 141126741,
-    "url": "/api/download/installer/Invoix-v1.0.5.zip"
+    "name": "Invoix-v1.0.6.zip",
+    "size": 141133018,
+    "url": "/api/download/installer/Invoix-v1.0.6.zip"
   },
   "exe": {
-    "name": "Invoix Setup 1.0.5.exe",
-    "size": 91647469,
-    "url": "/api/download/installer/Invoix%20Setup%201.0.5.exe"
+    "name": "Invoix Setup 1.0.6.exe",
+    "size": 91652776,
+    "url": "/api/download/installer/Invoix%20Setup%201.0.6.exe"
   }
 }
