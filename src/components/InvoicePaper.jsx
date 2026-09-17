@@ -1,4 +1,5 @@
 import React, { useRef } from 'react';
+import { Printer } from 'lucide-react';
 import { fmtMoney, fmtDate } from '../api';
 
 function formatNum(n) {
@@ -67,7 +68,7 @@ export default function InvoicePaper({ invoice, company }) {
     <div>
       <div style={{ display: 'flex', gap: 10, justifyContent: 'flex-end', marginBottom: 16 }} className="no-print">
         <button className="btn btn-ghost btn-sm" onClick={handlePrint} style={{ borderRadius: 999 }}>
-          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6"><path d="M6 9V2h12v7" /><path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2" /><path d="M6 14h12v8H6z" /></svg>
+          <Printer size={14} />
           Print / Save as PDF
         </button>
       </div>
@@ -158,7 +159,7 @@ export default function InvoicePaper({ invoice, company }) {
         </div>
 
         {/* Totals */}
-        <div style={{ display: 'grid', gridTemplateColumns: '1fr 340px', gap: 0, borderTop: '1px solid var(--ink)' }}>
+        <div className="invoice-totals" style={{ display: 'grid', gridTemplateColumns: '1fr 340px', gap: 0, borderTop: '1px solid var(--ink)' }}>
           <div style={{ padding: '20px 32px', borderRight: '1px solid var(--line)', background: 'var(--paper)' }}>
             <div style={{ fontFamily: 'var(--font-mono)', fontSize: 10, letterSpacing: '0.14em', textTransform: 'uppercase', color: 'var(--stone-light)', marginBottom: 8 }}>Amount in words</div>
             <div style={{ fontFamily: 'var(--font-editorial)', fontStyle: 'italic', fontSize: 15, lineHeight: 1.5 }}>{invoice.amount_in_words || '—'}</div>

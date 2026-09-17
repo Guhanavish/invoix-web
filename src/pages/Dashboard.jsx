@@ -4,7 +4,7 @@ import { IndianRupee, FileText, Users, Package, ArrowUpRight, CloudUpload, Cloud
 import { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
 import { api, fmtMoney, fmtDate, fmtDateTime, invoiceStatus } from '../api';
 import { useAutoRefresh } from '../useAutoSync';
-import { StatCard, Badge, Empty, Loading, Skeleton, ErrorState, OfflineBar, useOnline, Reveal, AnimatedList, SpotlightCard } from '../components/ui';
+import { StatCard, Badge, Empty, Skeleton, ErrorState, OfflineBar, useOnline, Reveal, AnimatedList, PageHead } from '../components/ui';
 
 export default function Dashboard() {
   const [data, setData] = useState(null);
@@ -63,13 +63,10 @@ export default function Dashboard() {
   return (
     <div>
       {!online && <OfflineBar />}
-      <div style={{ display: 'flex', alignItems: 'baseline', gap: 16, flexWrap: 'wrap', marginBottom: 6 }}>
-        <h1 style={{ fontSize: 42, letterSpacing: '-0.04em' }}>{company?.name || 'Atelier'}</h1>
-        <span style={{ fontFamily: 'var(--font-editorial)', fontStyle: 'italic', color: 'var(--stone)', fontSize: 16 }}>— live folio</span>
-      </div>
-      <p style={{ fontFamily: 'var(--font-editorial)', fontStyle: 'italic', color: 'var(--stone)', marginBottom: 24, fontSize: 15 }}>
-        {sync?.lastSync ? `Last pressed ${fmtDateTime(sync.lastSync)} · ${sync?.tables?.length || 0} tables` : 'Awaiting first press from the desktop.'}
-      </p>
+      <PageHead
+        title={<>{company?.name || 'Atelier'} <span style={{ fontFamily: 'var(--font-editorial)', fontStyle: 'italic', fontWeight: 400, color: 'var(--stone)', fontSize: 16 }}>— live folio</span></>}
+        sub={sync?.lastSync ? `Last pressed ${fmtDateTime(sync.lastSync)} · ${sync?.tables?.length || 0} tables` : 'Awaiting first press from the desktop.'}
+      />
 
       <div className="stat-grid">
         <StatCard tone="blue" icon={<IndianRupee size={16} />} label="Total revenue" numeric={totalRevenue} format={(v) => fmtMoney(v)} sub={`${fmtMoney(monthlyRevenue)} this month`} />

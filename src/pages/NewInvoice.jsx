@@ -223,6 +223,7 @@ export default function NewInvoice() {
               <h3 style={{ fontFamily: 'var(--font-display)', fontSize: 18 }}>Items <span style={{ fontFamily: 'var(--font-mono)', fontSize: 11, color: 'var(--stone-light)', fontWeight: 400 }}>— {items.length} lines</span></h3>
               <button type="button" className="btn btn-ghost btn-sm" onClick={addItem} style={{ borderRadius: 999 }}><Plus size={14} /> Add line</button>
             </div>
+            <div className="item-lines">
             {items.map((it, idx) => {
               const rErr = (fieldErrors.items && fieldErrors.items[idx]) || {};
               return (
@@ -238,7 +239,8 @@ export default function NewInvoice() {
               </div>
               );
             })}
-            <div style={{ marginTop: 16, textAlign: 'right', background: 'var(--ink)', color: '#fdfcf8', padding: 16, borderRadius: 12, display: 'inline-block', float: 'right', minWidth: 240 }}>
+            </div>
+            <div style={{ marginTop: 16, textAlign: 'right', background: 'var(--ink)', color: '#fdfcf8', padding: 16, borderRadius: 12, display: 'inline-block', float: 'right', minWidth: 'min(240px,100%)' }}>
               <div style={{ fontFamily: 'var(--font-mono)', fontSize: 10, letterSpacing: '0.12em', textTransform: 'uppercase', opacity: 0.7 }}>Grand total</div>
               <div style={{ fontFamily: 'var(--font-display)', fontSize: 24, fontWeight: 700, marginTop: 4 }}>{fmtMoney(totals.grand)}</div>
               <div style={{ fontFamily: 'var(--font-mono)', fontSize: 11, opacity: 0.7, marginTop: 4 }}>Sub {fmtMoney(totals.sub_total)} · Tax {fmtMoney(totals.cgst+totals.sgst+totals.igst)}</div>

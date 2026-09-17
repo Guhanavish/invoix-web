@@ -1,6 +1,6 @@
-﻿/* ============================================================
-INVOIX WEB — Editorial Ledger Design System
-Philosophy: "The quiet prestige of a heritage merchant's ledger —
+/* ============================================================
+INVOIX WEB � Editorial Ledger Design System
+Philosophy: "The quiet prestige of a heritage merchant's ledger �
 ink on cotton paper, where every figure carries weight."
 Intent: Trust through craftsmanship, not tech gloss.
 Signature: Fraunces display + warm paper/charcoal/oxide palette
@@ -9,7 +9,7 @@ Constraint: No SaaS blue, no card-shadow soup, no Inter.
 ============================================================ */
 
 :root {
-  /* Refined Palette — Sleek, Accessible, Trustworthy (WCAG AA+) */
+  /* Refined Palette � Sleek, Accessible, Trustworthy (WCAG AA+) */
   --paper: #ffffff;
   --paper-2: #f8fafc;
   --paper-3: #f1f5f9;
@@ -26,6 +26,11 @@ Constraint: No SaaS blue, no card-shadow soup, no Inter.
   --sage: #047857;
   --sage-dark: #047857;
   --sage-soft: #d1fae5;
+  --success: #047857;
+  --success-soft: #d1fae5;
+  --danger: #b42318;
+  --danger-soft: #fee2e2;
+  --muted: #64748b;
   --line: #e2e8f0;
   --line-strong: #cbd5e1;
   --line-faint: #f1f5f9;
@@ -73,7 +78,7 @@ a { color: inherit; text-decoration: none; }
 button { font-family: inherit; }
 ::selection { background: var(--oxide); color: #fff; }
 
-/* ---------- Type Utilities — each hierarchy gets its own voice ---------- */
+/* ---------- Type Utilities � each hierarchy gets its own voice ---------- */
 .mono { font-family: var(--font-mono); }
 .label {
   font-family: var(--font-mono);
@@ -110,7 +115,7 @@ button { font-family: inherit; }
   letter-spacing: -0.01em;
 }
 
-/* ---------- Buttons — tactile, paper-pressed ---------- */
+/* ---------- Buttons � tactile, paper-pressed ---------- */
 .btn {
   display: inline-flex;
   align-items: center;
@@ -124,7 +129,7 @@ button { font-family: inherit; }
   font-weight: 600;
   letter-spacing: -0.01em;
   cursor: pointer;
-  transition: all 0.2s var(--ease);
+  transition: background-color 0.2s var(--ease), border-color 0.2s var(--ease), transform 0.2s var(--ease), box-shadow 0.2s var(--ease);
   white-space: nowrap;
 }
 .btn:active { transform: scale(0.98) translateY(1px); }
@@ -143,7 +148,7 @@ button { font-family: inherit; }
 .btn-sm { padding: 8px 16px; font-size: 13px; }
 .btn-square { border-radius: var(--radius-sm); }
 
-/* ---------- Cards — paper, not plastic ---------- */
+/* ---------- Cards � paper, not plastic ---------- */
 .card {
   background: #fff;
   border: 1px solid var(--line);
@@ -155,7 +160,7 @@ button { font-family: inherit; }
   border: 1px solid var(--line);
 }
 
-/* ---------- Badges — typeset, not pill-default ---------- */
+/* ---------- Badges � typeset, not pill-default ---------- */
 .badge {
   display: inline-flex;
   align-items: center;
@@ -176,7 +181,7 @@ button { font-family: inherit; }
 .badge-sales { background: #f5f1eb; color: var(--ink); border-color: var(--line); }
 .badge-purchase { background: var(--ink); color: var(--paper); }
 
-/* ---------- Tables — ledger paper ---------- */
+/* ---------- Tables � ledger paper ---------- */
 .table-wrap { overflow-x: auto; }
 table.tbl { width: 100%; border-collapse: collapse; font-size: 14px; }
 table.tbl th {
@@ -201,7 +206,7 @@ table.tbl tbody tr:hover { background: var(--oxide-faint); }
 table.tbl tbody tr:last-child td { border-bottom: none; }
 .money { font-family: var(--font-mono); font-weight: 500; letter-spacing: -0.02em; }
 
-/* ---------- Forms — ink on paper ---------- */
+/* ---------- Forms � ink on paper ---------- */
 .field { display: flex; flex-direction: column; gap: 7px; margin-bottom: 18px; }
 .field label {
   font-family: var(--font-mono);
@@ -231,7 +236,7 @@ table.tbl tbody tr:last-child td { border-bottom: none; }
 .input::placeholder { color: #b8b0a6; font-family: var(--font-body); }
 select.input { cursor: pointer; }
 
-/* ---------- App Shell — sidebar as binding ---------- */
+/* ---------- App Shell � sidebar as binding ---------- */
 .app { display: grid; grid-template-columns: 260px 1fr; min-height: 100vh; background: var(--paper); }
 .sidebar {
   background: var(--ink-2);
@@ -277,7 +282,7 @@ select.input { cursor: pointer; }
   font-size: 14px;
   font-weight: 500;
   letter-spacing: -0.01em;
-  transition: all 0.18s var(--ease);
+  transition: background-color 0.18s var(--ease), color 0.18s var(--ease);
   border: 1px solid transparent;
 }
 .nav-link svg { flex-shrink: 0; opacity: 0.7; }
@@ -335,7 +340,7 @@ select.input { cursor: pointer; }
 .page-head h1 i { font-weight: 400; font-style: italic; }
 .page-head p { font-family: var(--font-editorial); font-style: italic; color: var(--stone); margin-top: 6px; font-size: 16px; max-width: 560px; }
 
-/* ---------- Stat cards — editorial, not metric tiles ---------- */
+/* ---------- Stat cards � editorial, not metric tiles ---------- */
 .stat-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 16px; }
 .stat-card { padding: 22px; position: relative; overflow: hidden; background: #fff; border: 1px solid var(--line); border-radius: var(--radius); }
 .stat-card .label { margin-bottom: 12px; display: flex; align-items: center; gap: 8px; font-family: var(--font-mono); font-size: 10px; letter-spacing: 0.14em; }
@@ -359,7 +364,7 @@ select.input { cursor: pointer; }
 .bento-head { display: flex; align-items: center; justify-content: space-between; margin-bottom: 18px; border-bottom: 1px solid var(--line-faint); padding-bottom: 14px; }
 .bento-head h3 { font-family: var(--font-display); font-size: 18px; font-weight: 600; }
 
-/* ---------- Landing — paper atelier ---------- */
+/* ---------- Landing � paper atelier ---------- */
 .land-nav {
   position: fixed;
   top: 0; left: 0; right: 0;
@@ -453,7 +458,7 @@ select.input { cursor: pointer; }
 .sec-head p { font-family: var(--font-editorial); font-style: italic; color: var(--stone); font-size: 17px; line-height: 1.6; }
 
 .feat-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 20px; }
-.feat-card { padding: 28px; background: #fff; border: 1px solid var(--line); border-radius: var(--radius); transition: all 0.3s var(--ease); position: relative; overflow: hidden; }
+.feat-card { padding: 28px; background: #fff; border: 1px solid var(--line); border-radius: var(--radius); transition: transform 0.3s var(--ease), box-shadow 0.3s var(--ease), border-color 0.3s var(--ease); position: relative; overflow: hidden; }
 .feat-card::before { content: ''; position: absolute; top: 0; left: 0; right: 0; height: 2px; background: var(--ink); transform: scaleX(0); transition: transform 0.3s var(--ease); transform-origin: left; }
 .feat-card:hover { transform: translateY(-4px); box-shadow: var(--shadow-pop); border-color: var(--line-strong); }
 .feat-card:hover::before { transform: scaleX(1); }
@@ -509,7 +514,7 @@ select.input { cursor: pointer; }
 
 .land-foot { border-top: 1px solid var(--line); padding: 32px 40px; max-width: 1200px; margin: 0 auto; display: flex; align-items: center; justify-content: space-between; gap: 20px; flex-wrap: wrap; color: var(--stone); font-size: 13px; font-family: var(--font-mono); }
 
-/* ---------- Auth — atelier wall ---------- */
+/* ---------- Auth � atelier wall ---------- */
 .auth { min-height: 100vh; display: grid; grid-template-columns: 1fr 1fr; background: var(--paper); }
 .auth-brand {
   background: var(--ink);
@@ -559,7 +564,7 @@ select.input { cursor: pointer; }
 .err-box { background: var(--oxide-soft); color: var(--oxide-dark); border: 1px solid #f0c9b8; border-radius: var(--radius-sm); padding: 12px 16px; font-size: 13px; margin-bottom: 16px; font-family: var(--font-body); }
 .ok-box { background: var(--sage-soft); color: #4a5a2a; border: 1px solid #d6dfc2; border-radius: var(--radius-sm); padding: 12px 16px; font-size: 13px; margin-bottom: 16px; }
 
-/* ---------- Empty / loading — editorial ---------- */
+/* ---------- Empty / loading � editorial ---------- */
 .empty { text-align: center; padding: 64px 24px; color: var(--stone); }
 .empty .ico { width: 56px; height: 56px; border-radius: 14px; background: var(--paper-2); border: 1px solid var(--line); display: grid; place-items: center; margin: 0 auto 16px; color: var(--stone-light); }
 .empty h3 { font-family: var(--font-display); font-size: 18px; color: var(--ink); margin-bottom: 6px; }
@@ -575,7 +580,7 @@ select.input { cursor: pointer; }
 @keyframes spin { to { transform: rotate(360deg); } }
 .loading-wrap { display: grid; place-items: center; padding: 80px 0; }
 
-/* ---------- Skeleton loaders — shimmer over real layout ---------- */
+/* ---------- Skeleton loaders � shimmer over real layout ---------- */
 .skel {
   background: linear-gradient(90deg, var(--paper-2) 25%, var(--line-faint) 50%, var(--paper-2) 75%);
   background-size: 200% 100%;
@@ -602,7 +607,7 @@ select.input { cursor: pointer; }
   font-size: 13px; font-weight: 600; border-radius: 10px; padding: 10px 14px; margin-bottom: 16px;
 }
 
-/* ---------- Detail hero — invoice masthead ---------- */
+/* ---------- Detail hero � invoice masthead ---------- */
 .detail-hero { padding: 24px; display: flex; align-items: center; justify-content: space-between; gap: 16px; flex-wrap: wrap; background: #fff; border: 1px solid var(--line); border-radius: var(--radius); }
 .detail-hero h1, .detail-hero h2 { font-family: var(--font-mono); font-size: 24px; font-weight: 700; letter-spacing: -0.03em; }
 .detail-grid { display: grid; grid-template-columns: 1.6fr 1fr; gap: 16px; margin-top: 16px; align-items: start; }
@@ -627,11 +632,11 @@ select.input { cursor: pointer; }
   display: grid; place-items: center;
   color: var(--stone);
   cursor: pointer;
-  transition: all 0.15s var(--ease);
+  transition: color 0.15s var(--ease), border-color 0.15s var(--ease), background-color 0.15s var(--ease);
 }
 .icon-btn:hover { color: var(--ink); border-color: var(--ink); background: var(--paper-2); }
 
-/* ---------- Invoice PDF — paper simulation ---------- */
+/* ---------- Invoice PDF � paper simulation ---------- */
 .invoice-paper {
   background: #fff;
   border: 1px solid var(--line);
@@ -727,21 +732,30 @@ select.input { cursor: pointer; }
   .download-card { padding: 32px 24px; }
   .detail-grid { grid-template-columns: 1fr; }
   .invoice-paper-header { flex-direction: column; }
+  /* Rebuild: collapse fixed multi-col grids that squeezed on mobile */
+  .grid2 { grid-template-columns: 1fr; }
+  .aging-grid { grid-template-columns: repeat(2, 1fr); }
+  .invoice-totals { grid-template-columns: 1fr; }
+  .profile-grid { grid-template-columns: 1fr; }
+  .landing-split { grid-template-columns: 1fr; }
+  .table-wrap { overflow-x: auto; -webkit-overflow-scrolling: touch; }
+  .item-lines { overflow-x: auto; }
+  .item-lines > div { min-width: 720px; }
 }
 
 /* ============================================================
-INVOIX MOTION SYSTEM v2 — lightweight, zero-dependency
+INVOIX MOTION SYSTEM v2 � lightweight, zero-dependency
 Design philosophy: "The calm authority of a bound ledger at
-speed — ink, paper, amber seal, but every figure feels alive."
+speed � ink, paper, amber seal, but every figure feels alive."
 Signature: Fraunces + amber seal + hairline rules + staggered
 reveals, spotlight hover, count-up figures.
 Constraint: NO heavy libs. transform/opacity only. <300ms UI.
 Inspirations (CSS-only translations, no bundle cost):
  ReactBits (SplitText/SpotlightCard/AnimatedList/MagicBento/
- CountUp/DotGrid) · Uiverse (tactile press + shine + curved
- inputs) · Anime.js (stagger timelines via IO + CSS delays) ·
- Motion.dev (spring easing + layout fade + exit symmetry) ·
- KokonutUI (glass chips + shimmer text + particle dots) ·
+ CountUp/DotGrid) � Uiverse (tactile press + shine + curved
+ inputs) � Anime.js (stagger timelines via IO + CSS delays) �
+ Motion.dev (spring easing + layout fade + exit symmetry) �
+ KokonutUI (glass chips + shimmer text + particle dots) �
  Bklit (editorial charts + sweep loading + KPI sparklines).
 ============================================================ */
 :root {
@@ -759,7 +773,7 @@ Inspirations (CSS-only translations, no bundle cost):
   .reveal { opacity: 1 !important; transform: none !important; }
 }
 
-/* Scroll reveal — Anime.js stagger translated to IO + CSS */
+/* Scroll reveal � Anime.js stagger translated to IO + CSS */
 .reveal { opacity: 0; transform: translateY(14px); transition: opacity var(--dur-med) var(--ease-spring), transform var(--dur-med) var(--ease-spring); will-change: opacity, transform; }
 .reveal.in { opacity: 1; transform: none; }
 .reveal[data-delay="1"] { transition-delay: calc(var(--stagger) * 1); }
@@ -768,7 +782,7 @@ Inspirations (CSS-only translations, no bundle cost):
 .reveal[data-delay="4"] { transition-delay: calc(var(--stagger) * 4); }
 .reveal[data-delay="5"] { transition-delay: calc(var(--stagger) * 5); }
 
-/* Split text — ReactBits SplitText, words fade-rise with stagger */
+/* Split text � ReactBits SplitText, words fade-rise with stagger */
 .split { display: inline-block; }
 .split .w { display: inline-block; overflow: hidden; vertical-align: bottom; padding-bottom: 0.08em; margin-bottom: -0.08em; }
 .split .w > span { display: inline-block; transform: translateY(110%); opacity: 0; animation: split-rise 0.7s var(--ease-spring) forwards; }
@@ -777,14 +791,14 @@ Inspirations (CSS-only translations, no bundle cost):
 /* Count-up figures stay tabular so ledger never jitters */
 .count { font-variant-numeric: tabular-nums; }
 
-/* Tactile press — Uiverse + Emil: every press pushes, never flickers */
+/* Tactile press � Uiverse + Emil: every press pushes, never flickers */
 .pressable { transition: transform var(--dur-fast) var(--ease-spring), box-shadow var(--dur-fast) var(--ease-spring), border-color var(--dur-fast) var(--ease-spring), background var(--dur-fast) var(--ease-spring); }
 @media (hover: hover) and (pointer: fine) {
   .pressable:hover { transform: translateY(-1px); }
 }
 .pressable:active { transform: scale(0.97) translateY(1px); }
 
-/* Button shine sweep — Uiverse signature, GPU-only pseudo layer */
+/* Button shine sweep � Uiverse signature, GPU-only pseudo layer */
 .btn { position: relative; overflow: hidden; }
 .btn::after { content: ''; position: absolute; inset: 0; background: linear-gradient(105deg, transparent 40%, rgba(255,255,255,0.28) 50%, transparent 60%); transform: translateX(-120%); transition: transform 0.55s var(--ease-spring); pointer-events: none; }
 @media (hover: hover) and (pointer: fine) {
@@ -792,14 +806,14 @@ Inspirations (CSS-only translations, no bundle cost):
 }
 @media (prefers-reduced-motion: reduce) { .btn::after { display: none; } }
 
-/* Curved inputs — Uiverse floating focus ring, amber seal */
+/* Curved inputs � Uiverse floating focus ring, amber seal */
 .input, select.input { border-radius: 12px; }
 .input:focus { border-color: var(--oxide); box-shadow: 0 0 0 3px rgba(245,158,11,0.18), 0 1px 2px rgba(15,23,42,0.06); }
 .search-wrap { position: relative; }
 .search-wrap svg { position: absolute; left: 12px; top: 50%; transform: translateY(-50%); color: var(--stone-light); pointer-events: none; }
 .search-wrap .input { padding-left: 36px; }
 
-/* Spotlight card — ReactBits SpotlightCard, CSS vars set from mousemove */
+/* Spotlight card � ReactBits SpotlightCard, CSS vars set from mousemove */
 .spot { position: relative; overflow: hidden; isolation: isolate; }
 .spot::before { content: ''; position: absolute; inset: 0; z-index: 0; opacity: 0; transition: opacity var(--dur-med) var(--ease-spring); background: radial-gradient(320px circle at var(--mx, 50%) var(--my, 50%), var(--spot), transparent 65%); pointer-events: none; }
 @media (hover: hover) and (pointer: fine) {
@@ -808,14 +822,14 @@ Inspirations (CSS-only translations, no bundle cost):
 }
 .spot > * { position: relative; z-index: 1; }
 
-/* Magic bento — ReactBits MagicBento lift + hairline glow */
+/* Magic bento � ReactBits MagicBento lift + hairline glow */
 .bento-card, .feat-card, .stat-card { transition: transform var(--dur-med) var(--ease-spring), box-shadow var(--dur-med) var(--ease-spring), border-color var(--dur-med) var(--ease-spring); }
 @media (hover: hover) and (pointer: fine) {
   .bento-card:hover, .feat-card:hover { transform: translateY(-3px); box-shadow: var(--shadow-pop); }
   .stat-card:hover { transform: translateY(-2px); box-shadow: var(--shadow-pop); }
 }
 
-/* Animated list rows — ReactBits AnimatedList enter, Motion.dev symmetry */
+/* Animated list rows � ReactBits AnimatedList enter, Motion.dev symmetry */
 .anim-list > * { animation: row-in var(--dur-med) var(--ease-spring) backwards; }
 .anim-list > *:nth-child(1) { animation-delay: 0ms; }
 .anim-list > *:nth-child(2) { animation-delay: var(--stagger); }
@@ -825,41 +839,41 @@ Inspirations (CSS-only translations, no bundle cost):
 .anim-list > *:nth-child(n+6) { animation-delay: calc(var(--stagger) * 5); }
 @keyframes row-in { from { opacity: 0; transform: translateY(10px) scale(0.99); } to { opacity: 1; transform: none; } }
 
-/* Glass chip — KokonutUI liquid-glass, blur + inner hairline */
+/* Glass chip � KokonutUI liquid-glass, blur + inner hairline */
 .chip-glass { display: inline-flex; align-items: center; gap: 8px; padding: 8px 14px; border-radius: 999px; background: var(--glass); backdrop-filter: blur(12px); border: 1px solid rgba(255,255,255,0.6); box-shadow: inset 0 1px 1px rgba(255,255,255,0.5), 0 4px 16px rgba(15,23,42,0.08); font-family: var(--font-mono); font-size: 11px; font-weight: 600; letter-spacing: 0.06em; }
 
-/* Shimmer text — KokonutUI shimmer, opacity-only under reduced motion */
+/* Shimmer text � KokonutUI shimmer, opacity-only under reduced motion */
 .shimmer { background: linear-gradient(110deg, var(--ink) 35%, var(--oxide) 50%, var(--ink) 65%); background-size: 200% 100%; -webkit-background-clip: text; background-clip: text; color: transparent; animation: shimmer-slide 3.2s linear infinite; }
 @keyframes shimmer-slide { to { background-position: -200% 0; } }
 
-/* Dot-grid + grain hero backdrop — ReactBits DotGrid, GPU-cheap */
+/* Dot-grid + grain hero backdrop � ReactBits DotGrid, GPU-cheap */
 .dot-grid { background-image: radial-gradient(var(--line-strong) 1px, transparent 1px); background-size: 22px 22px; mask-image: radial-gradient(ellipse at 50% 0%, black 25%, transparent 72%); }
 
-/* Particle dots — KokonutUI particle-button hint, tiny float */
+/* Particle dots � KokonutUI particle-button hint, tiny float */
 .p-dot { position: absolute; width: 5px; height: 5px; border-radius: 50%; background: var(--oxide); opacity: 0.5; animation: p-float 5s ease-in-out infinite; pointer-events: none; }
 @keyframes p-float { 0%, 100% { transform: translateY(0); opacity: 0.35; } 50% { transform: translateY(-12px); opacity: 0.7; } }
 
-/* Chart theme — Bklit-inspired editorial: hairline grid, amber ink */
+/* Chart theme � Bklit-inspired editorial: hairline grid, amber ink */
 .recharts-cartesian-grid line { stroke: var(--line); }
 .recharts-tooltip-wrapper { outline: none !important; }
 .chart-tip { background: #fff; border: 1px solid var(--line); border-radius: 12px; padding: 10px 12px; font-family: var(--font-mono); font-size: 12px; box-shadow: var(--shadow-pop); }
 .kpi-spark { height: 44px; width: 100%; }
 
-/* Sweep loading — Bklit shimmer sweep across skeleton bars */
+/* Sweep loading � Bklit shimmer sweep across skeleton bars */
 .skel-sweep { position: relative; overflow: hidden; }
 .skel-sweep::after { content: ''; position: absolute; inset: 0; background: linear-gradient(105deg, transparent 30%, rgba(255,255,255,0.7) 50%, transparent 70%); transform: translateX(-100%); animation: sweep 1.6s var(--ease-spring) infinite; }
 @keyframes sweep { to { transform: translateX(100%); } }
 
-/* Toast stack — Motion.dev fan-into-pile, transitions (interruptible) */
+/* Toast stack � Motion.dev fan-into-pile, transitions (interruptible) */
 .toast-stack { position: fixed; bottom: 20px; right: 20px; display: flex; flex-direction: column; gap: 8px; z-index: 1001; }
 .toast { transition: transform var(--dur-med) var(--ease-spring), opacity var(--dur-med) var(--ease-spring); }
 .toast[data-enter] { transform: translateY(16px) scale(0.97); opacity: 0; }
 
-/* Segmented control — ledger tabs with sliding ink pill */
+/* Segmented control � ledger tabs with sliding ink pill */
 .seg { display: inline-flex; padding: 3px; gap: 2px; background: var(--paper-2); border: 1px solid var(--line); border-radius: 999px; }
-.seg button { border: 0; background: transparent; padding: 7px 14px; border-radius: 999px; font-size: 13px; font-weight: 600; color: var(--stone); transition: all var(--dur-fast) var(--ease-spring); }
+.seg button { border: 0; background: transparent; padding: 7px 14px; border-radius: 999px; font-size: 13px; font-weight: 600; color: var(--stone); transition: background-color var(--dur-fast) var(--ease-spring), color var(--dur-fast) var(--ease-spring), transform var(--dur-fast) var(--ease-spring); }
 .seg button[aria-selected="true"] { background: var(--ink); color: #fff; box-shadow: 0 2px 8px rgba(15,23,42,0.18); }
 .seg button:active { transform: scale(0.96); }
 
-/* Focus visibility — never remove outline without replacement */
+/* Focus visibility � never remove outline without replacement */
 :focus-visible { outline: 2px solid var(--oxide); outline-offset: 2px; border-radius: 6px; }

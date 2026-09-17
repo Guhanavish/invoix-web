@@ -52,18 +52,15 @@ export default function Reports() {
   return (
     <div>
       {!online && <OfflineBar />}
-      <div style={{ display: 'flex', alignItems: 'baseline', gap: 12, marginBottom: 4 }}>
-        <h1 style={{ fontSize: 36 }}>Reports</h1>
-        <span style={{ fontFamily: 'var(--font-editorial)', fontStyle: 'italic', color: 'var(--stone)' }}>GSTR &amp; aging — set from your figures.</span>
-      </div>
-      <p style={{ fontFamily: 'var(--font-mono)', fontSize: 10, letterSpacing: '0.14em', textTransform: 'uppercase', color: 'var(--stone-light)', marginBottom: 18 }}>GST summaries, net liability, receivable aging.</p>
-
-      <div style={{ display: 'flex', gap: 10, marginBottom: 18, flexWrap: 'wrap' }}>
-        <select className="input" style={{ borderRadius: 999, minWidth: 160 }} value={month} onChange={(e)=>setMonth(e.target.value)}>
+      <PageHead
+        title="Reports"
+        sub="GSTR & aging — set from your figures. GST summaries, net liability, receivable aging."
+      >
+        <select className="input" style={{ borderRadius: 999, minWidth: 'min(160px,100%)' }} value={month} onChange={(e)=>setMonth(e.target.value)} aria-label="Report month">
           {MONTHS.map((m)=>(<option key={m} value={m}>{m}</option>))}
         </select>
         <button className="btn btn-ghost btn-sm" onClick={exportG1} disabled={!g1.sales.length} style={{ borderRadius: 999 }}><Download size={14}/> Export GSTR-1</button>
-      </div>
+      </PageHead>
 
       <div className="bento">
         <div className="card bento-card">
@@ -110,7 +107,7 @@ export default function Reports() {
             <h3 style={{ fontFamily: 'var(--font-display)' }}>Aging <span style={{ fontWeight: 300, color: 'var(--stone)' }}>· receivables</span></h3>
             <span className="badge badge-unpaid">{fmtMoney(aging.totalOutstanding)} outstanding</span>
           </div>
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4,1fr)', gap: 12, marginBottom: 16 }}>
+          <div className="aging-grid" style={{ display: 'grid', gridTemplateColumns: 'repeat(4,1fr)', gap: 12, marginBottom: 16 }}>
             {Object.entries(aging.buckets).map(([bucket,list])=>(
               <div key={bucket} style={{ padding: 16, textAlign: 'center', background: 'var(--paper-2)', border: '1px solid var(--line)', borderRadius: 12 }}>
                 <div style={{ fontFamily: 'var(--font-mono)', fontSize: 10, letterSpacing: '0.12em', textTransform: 'uppercase', color: 'var(--stone-light)' }}>{bucket} days</div>
@@ -119,7 +116,7 @@ export default function Reports() {
               </div>
             ))}
           </div>
-          {aging.overdue.length===0 ? <p style={{ fontFamily: 'var(--font-editorial)', fontStyle: 'italic', color: 'var(--stone)' }}>No overdue receivables. The book is clean.</p> : (
+          {aging.overdue.length===0 ? <Empty icon={<BarChart3 size={20} />} title="No overdue receivables" sub="The book is clean." /> : (
             <div className="table-wrap">
               <table className="tbl">
                 <thead><tr><th>Invoice</th><th>Customer</th><th>Due date</th><th style={{textAlign:'right'}}>Overdue</th><th style={{textAlign:'right'}}>Outstanding</th></tr></thead>

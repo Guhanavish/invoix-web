@@ -2,7 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { NavLink, Outlet, useNavigate } from 'react-router-dom';
 import {
   LayoutDashboard, FileText, Users, Package, BookOpen, BarChart3,
-  Download, LogOut, Receipt, Inbox, FilePlus2, User,
+  Download, LogOut, Receipt, Inbox, FilePlus2, User, RefreshCw,
 } from 'lucide-react';
 import { api, fmtDateTime } from '../api';
 import { useSyncStatus, forceSyncCheck } from '../useAutoSync';
@@ -102,7 +102,7 @@ export default function Layout() {
               {sync.loading ? 'Checking…' : sync.synced ? `Synced ${fmtDateTime(sync.lastSync)}` : 'No data yet'}
             </div>
             <button className="icon-btn" title="Refresh" onClick={forceSyncCheck} aria-label="Refresh sync">
-              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8"><path d="M21 12a9 9 0 1 1-9-9c2.5 0 4.7 1 6.3 2.7L21 8V3h-5l2.3 2.3A7 7 0 1 0 21 12z" /></svg>
+              <RefreshCw size={14} />
             </button>
           </div>
         </header>
