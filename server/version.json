@@ -1,11 +1,11 @@
 {
   "version": "1.0.6",
-  "notes": "Manage Organizations layout fix, per-user username privacy, sidebar New Invoice touch fix, full web UI rebuild sweep",
+  "notes": "Manage Organizations layout fix, per-user username privacy, sidebar New Invoice touch fix, full web UI rebuild sweep. Fixed portable ZIP: single-folder Explorer-safe archive.",
   "mandatory": false,
-  "publishedAt": "2026-09-17T15:49:43.493Z",
+  "publishedAt": "2026-09-18T15:31:19.412Z",
   "zip": {
     "name": "Invoix-v1.0.6.zip",
-    "size": 141133018,
+    "size": 140940844,
     "url": "/api/download/installer/Invoix-v1.0.6.zip"
   },
   "exe": {
